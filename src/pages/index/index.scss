@@ -1,0 +1,133 @@
+.index {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #00d4aa 0%, #00a88a 100%);
+  padding: 64px 32px;
+  color: white;
+
+  .hero {
+    text-align: center;
+    margin-bottom: 80px;
+
+    .logo {
+      font-size: 120px;
+      display: block;
+      margin-bottom: 24px;
+    }
+
+    .title {
+      display: block;
+      font-size: 56px;
+      font-weight: bold;
+      margin-bottom: 16px;
+    }
+
+    .subtitle {
+      display: block;
+      font-size: 28px;
+      opacity: 0.9;
+      margin-bottom: 24px;
+    }
+
+    .tagline {
+      display: block;
+      font-size: 32px;
+      font-weight: 600;
+      opacity: 0.95;
+    }
+  }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-bottom: 80px;
+
+    .feature {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 32px 16px;
+      text-align: center;
+
+      .feature-icon {
+        font-size: 56px;
+        display: block;
+        margin-bottom: 16px;
+      }
+
+      .feature-title {
+        display: block;
+        font-size: 28px;
+        font-weight: bold;
+        margin-bottom: 8px;
+      }
+
+      .feature-desc {
+        display: block;
+        font-size: 22px;
+        opacity: 0.9;
+      }
+    }
+  }
+
+  .cta {
+    text-align: center;
+    margin-bottom: 80px;
+
+    .price-tag {
+      display: block;
+      font-size: 40px;
+      font-weight: bold;
+      margin-bottom: 24px;
+    }
+
+    .start-button {
+      background: white;
+      color: #00d4aa;
+      font-size: 36px;
+      font-weight: bold;
+      border-radius: 16px;
+      padding: 32px 80px;
+      border: none;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+
+      &:active {
+        transform: scale(0.98);
+      }
+    }
+
+    .disclaimer {
+      display: block;
+      margin-top: 24px;
+      font-size: 24px;
+      opacity: 0.9;
+    }
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    padding: 40px 24px;
+
+    .stat {
+      text-align: center;
+
+      .stat-number {
+        display: block;
+        font-size: 48px;
+        font-weight: bold;
+        margin-bottom: 8px;
+      }
+
+      .stat-label {
+        display: block;
+        font-size: 24px;
+        opacity: 0.9;
+      }
+    }
+  }
+}

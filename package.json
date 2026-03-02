@@ -1,0 +1,43 @@
+{
+  "name": "tsla-rednote",
+  "version": "1.0.0",
+  "description": "TSLA Valuation Tracker for Red Note Mini Program - 特斯拉估值助手小程序",
+  "main": "index.js",
+  "scripts": {
+    "build:weapp": "taro build --type weapp",
+    "build:h5": "taro build --type h5",
+    "dev:weapp": "taro build --type weapp --watch",
+    "dev:h5": "taro build --type h5 --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "taro",
+    "mini-program",
+    "tsla",
+    "stock",
+    "valuation",
+    "rednote",
+    "xiaohongshu"
+  ],
+  "author": "chedy028",
+  "license": "MIT",
+  "dependencies": {
+    "@tarojs/components": "^4.1.11",
+    "@tarojs/react": "^4.1.11",
+    "@tarojs/router": "^4.1.11",
+    "@tarojs/runtime": "^4.1.11",
+    "@tarojs/taro": "^4.1.11",
+    "@tarojs/webpack5-runner": "^4.1.11",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.0",
+    "@tarojs/cli": "^4.1.11",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "sass": "^1.97.3",
+    "typescript": "^5.9.3"
+  }
+}

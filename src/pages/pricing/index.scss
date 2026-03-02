@@ -1,0 +1,272 @@
+.pricing {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%);
+  padding: 32px;
+
+  .hero {
+    text-align: center;
+    margin-bottom: 48px;
+
+    .hero-title {
+      display: block;
+      font-size: 56px;
+      font-weight: bold;
+      color: #1a1a1a;
+      margin-bottom: 16px;
+    }
+
+    .hero-subtitle {
+      display: block;
+      font-size: 32px;
+      color: #666;
+    }
+  }
+
+  .pricing-card {
+    background: white;
+    border-radius: 32px;
+    padding: 48px;
+    margin-bottom: 48px;
+    box-shadow: 0 8px 32px rgba(0, 212, 170, 0.15);
+    position: relative;
+
+    .badge {
+      position: absolute;
+      top: -16px;
+      right: 40px;
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+      padding: 12px 32px;
+      border-radius: 24px;
+      box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+
+      .badge-text {
+        color: white;
+        font-size: 24px;
+        font-weight: bold;
+      }
+    }
+
+    .price-display {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      margin: 32px 0;
+
+      .currency {
+        font-size: 48px;
+        color: #00d4aa;
+        font-weight: bold;
+      }
+
+      .price {
+        font-size: 120px;
+        color: #00d4aa;
+        font-weight: bold;
+        line-height: 1;
+      }
+
+      .period {
+        font-size: 36px;
+        color: #666;
+        margin-left: 8px;
+      }
+    }
+
+    .price-description {
+      display: block;
+      text-align: center;
+      font-size: 28px;
+      color: #999;
+      margin-bottom: 40px;
+    }
+
+    .features-list {
+      margin-bottom: 40px;
+
+      .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 20px 0;
+        border-bottom: 1px solid #f0f0f0;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        .feature-icon {
+          font-size: 36px;
+        }
+
+        .feature-text {
+          font-size: 32px;
+          color: #333;
+        }
+      }
+    }
+
+    .subscribe-button {
+      background: linear-gradient(135deg, #00d4aa 0%, #00a88a 100%);
+      color: white;
+      font-size: 36px;
+      font-weight: bold;
+      border-radius: 16px;
+      padding: 32px;
+      border: none;
+      width: 100%;
+      box-shadow: 0 6px 20px rgba(0, 212, 170, 0.3);
+
+      &:active {
+        transform: scale(0.98);
+      }
+    }
+
+    .terms {
+      display: block;
+      text-align: center;
+      margin-top: 24px;
+      font-size: 24px;
+      color: #999;
+    }
+  }
+
+  .social-proof {
+    background: #fff;
+    border-radius: 24px;
+    padding: 40px;
+    margin-bottom: 48px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+
+    .proof-title {
+      display: block;
+      font-size: 32px;
+      font-weight: bold;
+      color: #1a1a1a;
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .testimonials {
+      .testimonial {
+        background: #f8f9fa;
+        border-radius: 16px;
+        padding: 32px;
+        margin-bottom: 24px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .testimonial-text {
+          display: block;
+          font-size: 28px;
+          color: #333;
+          line-height: 1.6;
+          margin-bottom: 16px;
+        }
+
+        .testimonial-author {
+          display: block;
+          font-size: 24px;
+          color: #999;
+        }
+      }
+    }
+  }
+
+  .value-section {
+    margin-bottom: 48px;
+
+    .value-title {
+      display: block;
+      font-size: 48px;
+      font-weight: bold;
+      color: #1a1a1a;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .value-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 24px;
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+
+      .value-icon {
+        font-size: 56px;
+      }
+
+      .value-content {
+        flex: 1;
+
+        .value-heading {
+          display: block;
+          font-size: 32px;
+          font-weight: bold;
+          color: #1a1a1a;
+          margin-bottom: 12px;
+        }
+
+        .value-text {
+          display: block;
+          font-size: 28px;
+          color: #666;
+          line-height: 1.5;
+        }
+      }
+    }
+  }
+
+  .faq-section {
+    margin-bottom: 48px;
+
+    .faq-title {
+      display: block;
+      font-size: 48px;
+      font-weight: bold;
+      color: #1a1a1a;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .faq-item {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+
+      .faq-question {
+        display: block;
+        font-size: 30px;
+        font-weight: bold;
+        color: #1a1a1a;
+        margin-bottom: 12px;
+      }
+
+      .faq-answer {
+        display: block;
+        font-size: 28px;
+        color: #666;
+        line-height: 1.6;
+      }
+    }
+  }
+
+  .disclaimer {
+    background: #fff3cd;
+    border-radius: 12px;
+    padding: 24px;
+    border-left: 6px solid #ff9800;
+
+    .disclaimer-text {
+      font-size: 24px;
+      color: #856404;
+      line-height: 1.5;
+    }
+  }
+}
