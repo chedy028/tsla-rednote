@@ -28,11 +28,17 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
+.env.production
 
 # Taro
 .taro-cache/
+.cache/
 
-# Lock files (optional - remove if you want to commit them)
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
+# Supabase local
+supabase/.branches/
+supabase/.temp/
+
+# Review files (generated)
+REVIEW.md
+BUG_REPORT.md
+.swc/

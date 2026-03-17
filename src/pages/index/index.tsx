@@ -7,6 +7,10 @@ export default function Index() {
     Taro.switchTab({ url: '/pages/dashboard/index' })
   }
 
+  const handlePricing = () => {
+    Taro.switchTab({ url: '/pages/pricing/index' })
+  }
+
   return (
     <View className='index'>
       {/* Hero */}
@@ -14,7 +18,17 @@ export default function Index() {
         <Text className='logo'>📈</Text>
         <Text className='title'>特斯拉估值助手</Text>
         <Text className='subtitle'>TSLA Valuation Tracker</Text>
-        <Text className='tagline'>用 P/S 比率，抓住 TSLA 最佳买点</Text>
+        <Text className='tagline'>AI 驱动的估值分析，用 P/S 比率抓住最佳买点</Text>
+      </View>
+
+      {/* Free Value Teaser */}
+      <View className='valuation-teaser'>
+        <Text className='teaser-label'>今日 TSLA 估值速览</Text>
+        <View className='teaser-gauge'>
+          <Text className='teaser-emoji'>🟡</Text>
+          <Text className='teaser-tier'>合理估值区间</Text>
+        </View>
+        <Text className='teaser-hint'>进入查看详细 P/S 比率分析 →</Text>
       </View>
 
       {/* Features */}
@@ -26,9 +40,9 @@ export default function Index() {
         </View>
 
         <View className='feature'>
-          <Text className='feature-icon'>📊</Text>
-          <Text className='feature-title'>估值分析</Text>
-          <Text className='feature-desc'>P/S 比率判断</Text>
+          <Text className='feature-icon'>🤖</Text>
+          <Text className='feature-title'>AI 分析师</Text>
+          <Text className='feature-desc'>智能估值解读</Text>
         </View>
 
         <View className='feature'>
@@ -40,10 +54,13 @@ export default function Index() {
 
       {/* CTA */}
       <View className='cta'>
-        <Text className='price-tag'>仅需 ¥0.99/月</Text>
         <Button className='start-button' onClick={handleStart}>
-          立即开始
+          免费查看今日估值
         </Button>
+        <View className='pricing-link' onClick={handlePricing}>
+          <Text className='price-tag'>低至 ¥4.08/月 解锁完整功能</Text>
+          <Text className='price-sub'>每天只要1毛6 · 按年付省17%</Text>
+        </View>
         <Text className='disclaimer'>
           📚 教育工具 · 不构成投资建议
         </Text>

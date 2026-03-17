@@ -1,4 +1,5 @@
 import { Component, PropsWithChildren } from 'react'
+import { StoreProvider } from './store'
 import './app.scss'
 
 class App extends Component<PropsWithChildren> {
@@ -11,7 +12,7 @@ class App extends Component<PropsWithChildren> {
   componentDidHide() {}
 
   render() {
-    return this.props.children
+    return <StoreProvider>{this.props.children}</StoreProvider>
   }
 }
 
