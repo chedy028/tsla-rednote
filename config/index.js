@@ -9,7 +9,7 @@ const config = {
   },
   sourceRoot: 'src',
   outputRoot: 'dist',
-  plugins: [],
+  plugins: ['@tarojs/plugin-platform-tt'],
   defineConstants: {
   },
   copy: {
@@ -45,8 +45,22 @@ const config = {
     }
   },
   h5: {
-    publicPath: '/',
+    publicPath: '/tsla-rednote/',
     staticDirectory: 'static',
+    router: {
+      mode: 'hash'
+    },
+    webpackChain(chain) {
+      // Disable code splitting to fix H5 routing issue
+      // All pages will be in the main bundle
+      chain.optimization.splitChunks({
+        cacheGroups: {
+          default: false,
+          defaultVendors: false
+        }
+      })
+      chain.optimization.set('runtimeChunk', false)
+    },
     postcss: {
       autoprefixer: {
         enable: true,

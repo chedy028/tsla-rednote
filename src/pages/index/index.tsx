@@ -1,14 +1,25 @@
 import { View, Text, Button } from '@tarojs/components'
 import Taro from '@tarojs/taro'
+import CustomTabBar from '../../components/CustomTabBar'
 import './index.scss'
 
 export default function Index() {
   const handleStart = () => {
-    Taro.switchTab({ url: '/pages/dashboard/index' })
+    if (typeof window !== 'undefined') {
+      window.location.hash = '#/pages/dashboard/index'
+      window.location.reload()
+    } else {
+      Taro.switchTab({ url: '/pages/dashboard/index' })
+    }
   }
 
   const handlePricing = () => {
-    Taro.switchTab({ url: '/pages/pricing/index' })
+    if (typeof window !== 'undefined') {
+      window.location.hash = '#/pages/pricing/index'
+      window.location.reload()
+    } else {
+      Taro.switchTab({ url: '/pages/pricing/index' })
+    }
   }
 
   return (
@@ -81,6 +92,8 @@ export default function Index() {
           <Text className='stat-label'>用户评分</Text>
         </View>
       </View>
+
+      <CustomTabBar />
     </View>
   )
 }

@@ -1,8 +1,10 @@
 .index {
   min-height: 100vh;
   background: linear-gradient(180deg, #00d4aa 0%, #00a88a 100%);
-  padding: 64px 32px;
+  padding: 64px 32px 120px;
   color: white;
+  box-sizing: border-box;
+  overflow-y: auto;
 
   .hero {
     text-align: center;
@@ -33,6 +35,45 @@
       font-size: 32px;
       font-weight: 600;
       opacity: 0.95;
+    }
+  }
+
+  .valuation-teaser {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 48px;
+    text-align: center;
+
+    .teaser-label {
+      display: block;
+      font-size: 26px;
+      opacity: 0.9;
+      margin-bottom: 16px;
+    }
+
+    .teaser-gauge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+
+      .teaser-emoji {
+        font-size: 48px;
+      }
+
+      .teaser-tier {
+        font-size: 36px;
+        font-weight: bold;
+      }
+    }
+
+    .teaser-hint {
+      display: block;
+      font-size: 24px;
+      opacity: 0.85;
     }
   }
 
@@ -93,6 +134,24 @@
 
       &:active {
         transform: scale(0.98);
+      }
+    }
+
+    .pricing-link {
+      margin-top: 24px;
+      text-align: center;
+
+      .price-tag {
+        display: block;
+        font-size: 30px;
+        font-weight: bold;
+        margin-bottom: 8px;
+      }
+
+      .price-sub {
+        display: block;
+        font-size: 24px;
+        opacity: 0.85;
       }
     }
 

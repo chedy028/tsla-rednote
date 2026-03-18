@@ -174,27 +174,35 @@ export async function verifySubscription(openid: string, token?: string): Promis
   isActive: boolean
   expiresAt: string | null
 }> {
-  const result = await invokeFunction<{
-    is_active: boolean
-    expires_at: string | null
-  }>('verify-subscription', { openid }, token)
-
-  if (result.error || !result.data) {
-    // SECURITY NOTE: 服务端 Edge Function 验证失败时，回退到直接查询 profiles 表。
-    // 这依赖 RLS 策略保证数据完整性。如需更严格安全性，应在此返回 { isActive: false }。
-    const profile = await getProfile(openid, token)
-    if (profile.data && profile.data.length > 0) {
-      const p = profile.data[0]
-      const isActive = p.subscription_status === 'active' &&
-        (!p.subscription_expires_at || new Date(p.subscription_expires_at) > new Date())
-      return { isActive, expiresAt: p.subscription_expires_at }
-    }
+  // If Supabase is not configured, return free status immediately
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     return { isActive: false, expiresAt: null }
   }
 
-  return {
-    isActive: result.data.is_active,
-    expiresAt: result.data.expires_at
+  try {
+    const result = await invokeFunction<{
+      is_active: boolean
+      expires_at: string | null
+    }>('verify-subscription', { openid }, token)
+
+    if (result.error || !result.data) {
+      const profile = await getProfile(openid, token)
+      if (profile.data && profile.data.length > 0) {
+        const p = profile.data[0]
+        const isActive = p.subscription_status === 'active' &&
+          (!p.subscription_expires_at || new Date(p.subscription_expires_at) > new Date())
+        return { isActive, expiresAt: p.subscription_expires_at }
+      }
+      return { isActive: false, expiresAt: null }
+    }
+
+    return {
+      isActive: result.data.is_active,
+      expiresAt: result.data.expires_at
+    }
+  } catch {
+    // Network error - return free status
+    return { isActive: false, expiresAt: null }
   }
 }
 

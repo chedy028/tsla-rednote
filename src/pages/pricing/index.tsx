@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Taro from '@tarojs/taro'
 import PricingToggle from '../../components/PricingToggle'
 import { subscribe } from '../../services/payment'
+import CustomTabBar from '../../components/CustomTabBar'
 import './index.scss'
 
 type PlanType = 'basic' | 'pro'
@@ -43,7 +44,7 @@ export default function Pricing() {
         if (result.success) {
           Taro.showToast({ title: result.message, icon: 'success' })
           setTimeout(() => {
-            Taro.switchTab({ url: '/pages/dashboard/index' })
+            Taro.reLaunch({ url: '/pages/dashboard/index' })
           }, 1500)
         } else {
           Taro.showToast({ title: result.message, icon: 'none' })
@@ -333,6 +334,8 @@ export default function Pricing() {
           ⚠️ 投资有风险，入市需谨慎。本工具仅供教育和学习使用，不构成任何投资建议。
         </Text>
       </View>
+
+      <CustomTabBar />
     </View>
   )
 }

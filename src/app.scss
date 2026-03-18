@@ -7,3 +7,13 @@ page {
 .container {
   padding: 32px;
 }
+
+/* Hide native Taro tabBar in H5 mode - we use CustomTabBar instead */
+.taro-tabbar__tabbar {
+  display: none !important;
+}
+
+/* Also hide the Taro navigation bar in H5 (we don't need it) */
+.taro-navigation-bar-no-icon {
+  display: none !important;
+}

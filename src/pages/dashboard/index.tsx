@@ -3,7 +3,84 @@ import { useState, useEffect, useCallback } from 'react'
 import Taro from '@tarojs/taro'
 import { fetchTSLAData, getUpdateTimeText, type TSLAStockData } from '../../services/stockApi'
 import { checkSubscription } from '../../services/payment'
+import { HISTORICAL_PS_DATA, getHistoricalPercentile } from '../../services/valuation'
+import CustomTabBar from '../../components/CustomTabBar'
 import './index.scss'
+
+// ==================== 买卖信号分析 ====================
+
+interface BuySellSignal {
+  signal: 'buy' | 'hold' | 'sell'
+  emoji: string
+  label: string
+  color: string
+  reasons: string[]
+}
+
+function getBuySellSignal(psRatio: number, changePercent: number): BuySellSignal {
+  const percentile = getHistoricalPercentile(psRatio)
+  const historicalAvg = HISTORICAL_PS_DATA.reduce((sum, d) => sum + d.psRatio, 0) / HISTORICAL_PS_DATA.length
+
+  if (psRatio < 6) {
+    return {
+      signal: 'buy',
+      emoji: '\uD83D\uDFE2',
+      label: '买入信号',
+      color: '#2e7d32',
+      reasons: [
+        `P/S 比率 ${psRatio.toFixed(2)}x 低于 6x，处于历史低位`,
+        `当前估值处于历史 ${percentile}% 分位，属于价值区间`,
+        `远低于历史均值 ${historicalAvg.toFixed(1)}x，存在较大上涨空间`,
+        '建议：可分批建仓，逢低加仓'
+      ]
+    }
+  }
+
+  if (psRatio < 8) {
+    return {
+      signal: 'buy',
+      emoji: '\uD83D\uDFE2',
+      label: '买入信号',
+      color: '#2e7d32',
+      reasons: [
+        `P/S 比率 ${psRatio.toFixed(2)}x，估值偏低`,
+        `低于历史均值 ${historicalAvg.toFixed(1)}x`,
+        `历史分位 ${percentile}%，具有投资吸引力`,
+        '建议：适合逐步建仓'
+      ]
+    }
+  }
+
+  if (psRatio < 13) {
+    return {
+      signal: 'hold',
+      emoji: '\uD83D\uDFE1',
+      label: '持有观望',
+      color: '#f57f17',
+      reasons: [
+        `P/S 比率 ${psRatio.toFixed(2)}x，估值处于合理区间`,
+        `接近历史均值 ${historicalAvg.toFixed(1)}x`,
+        `历史分位 ${percentile}%，不高不低`,
+        '建议：已持仓者继续持有，空仓者等待回调'
+      ]
+    }
+  }
+
+  return {
+    signal: 'sell',
+    emoji: '\uD83D\uDD34',
+    label: '卖出信号',
+    color: '#c62828',
+    reasons: [
+      `P/S 比率 ${psRatio.toFixed(2)}x，估值偏高`,
+      `高于历史均值 ${historicalAvg.toFixed(1)}x`,
+      `历史分位 ${percentile}%，市场情绪过热`,
+      '建议：考虑分批减仓锁定收益'
+    ]
+  }
+}
+
+// ==================== 组件 ====================
 
 export default function Dashboard() {
   const [tslaData, setTslaData] = useState<TSLAStockData | null>(null)
@@ -49,7 +126,7 @@ export default function Dashboard() {
   }, [tslaData])
 
   const handleUpgrade = () => {
-    Taro.switchTab({ url: '/pages/pricing/index' })
+    Taro.reLaunch({ url: '/pages/pricing/index' })
   }
 
   const handleOpenAI = () => {
@@ -151,6 +228,35 @@ export default function Dashboard() {
         </View>
       </View>
 
+      {/* Buy/Sell Signal - FREE for all users */}
+      {(() => {
+        const signal = getBuySellSignal(tslaData.psRatio, tslaData.changePercent)
+        return (
+          <View className='signal-card'>
+            <View className='signal-header'>
+              <Text className='signal-title'>买卖信号</Text>
+            </View>
+            <View className='signal-badge' style={{ backgroundColor: signal.color + '15', borderColor: signal.color }}>
+              <Text className='signal-emoji'>{signal.emoji}</Text>
+              <Text className='signal-label' style={{ color: signal.color }}>{signal.label}</Text>
+            </View>
+            <View className='signal-reasons'>
+              {signal.reasons.map((reason, idx) => (
+                <View className='signal-reason-item' key={`reason-${idx}`}>
+                  <Text className='signal-reason-bullet'>•</Text>
+                  <Text className='signal-reason-text'>{reason}</Text>
+                </View>
+              ))}
+            </View>
+            <View className='signal-disclaimer'>
+              <Text className='signal-disclaimer-text'>
+                以上信号基于 P/S 比率分析，仅供参考
+              </Text>
+            </View>
+          </View>
+        )
+      })()}
+
       {/* Pro-gated features with upgrade prompts */}
       {!isPro ? (
         <View className='upgrade-section'>
@@ -190,8 +296,72 @@ export default function Dashboard() {
         <View className='pro-content'>
           <View className='pro-section'>
             <Text className='pro-section-title'>📊 90天历史走势</Text>
-            <View className='chart-placeholder'>
-              <Text className='chart-placeholder-text'>历史图表加载中...</Text>
+            {/* 文字迷你图表：P/S 比率柱状可视化 */}
+            <View className='history-chart'>
+              <View className='history-chart-header'>
+                <Text className='history-chart-label'>季度 P/S 比率趋势</Text>
+                <Text className='history-chart-range'>
+                  {HISTORICAL_PS_DATA[0].date} ~ {HISTORICAL_PS_DATA[HISTORICAL_PS_DATA.length - 1].date}
+                </Text>
+              </View>
+              <View className='history-bar-chart'>
+                {HISTORICAL_PS_DATA.map((item, idx) => {
+                  const maxPS = Math.max(...HISTORICAL_PS_DATA.map(d => d.psRatio))
+                  const barWidth = Math.round((item.psRatio / maxPS) * 100)
+                  const prevPS = idx > 0 ? HISTORICAL_PS_DATA[idx - 1].psRatio : item.psRatio
+                  const trend = item.psRatio > prevPS ? '\u2191' : item.psRatio < prevPS ? '\u2193' : '\u2192'
+                  const trendColor = item.psRatio > prevPS ? '#c62828' : item.psRatio < prevPS ? '#2e7d32' : '#666'
+                  return (
+                    <View className='history-bar-row' key={item.date}>
+                      <Text className='history-bar-date'>{item.date}</Text>
+                      <View className='history-bar-track'>
+                        <View
+                          className='history-bar-fill'
+                          style={{
+                            width: `${barWidth}%`,
+                            backgroundColor: item.psRatio < 8 ? '#2e7d32' : item.psRatio < 13 ? '#f57f17' : '#c62828'
+                          }}
+                        />
+                      </View>
+                      <Text className='history-bar-value'>{item.psRatio.toFixed(1)}x</Text>
+                      <Text className='history-bar-trend' style={{ color: trendColor }}>{trend}</Text>
+                    </View>
+                  )
+                })}
+              </View>
+              {/* 当前值对比 */}
+              <View className='history-current'>
+                <Text className='history-current-label'>当前 P/S</Text>
+                <Text className='history-current-value' style={{ color: valuation.color }}>
+                  {tslaData.psRatio.toFixed(2)}x
+                </Text>
+                <Text className='history-current-vs'>
+                  vs 均值 {(HISTORICAL_PS_DATA.reduce((s, d) => s + d.psRatio, 0) / HISTORICAL_PS_DATA.length).toFixed(1)}x
+                </Text>
+              </View>
+            </View>
+            {/* 季度数据表格 */}
+            <View className='history-table'>
+              <View className='history-table-header'>
+                <Text className='history-table-th'>季度</Text>
+                <Text className='history-table-th'>P/S</Text>
+                <Text className='history-table-th'>股价</Text>
+                <Text className='history-table-th'>趋势</Text>
+              </View>
+              {[...HISTORICAL_PS_DATA].reverse().map((item, idx) => {
+                const originalIdx = HISTORICAL_PS_DATA.length - 1 - idx
+                const prevPS = originalIdx > 0 ? HISTORICAL_PS_DATA[originalIdx - 1].psRatio : item.psRatio
+                const trend = item.psRatio > prevPS ? '\u2191' : item.psRatio < prevPS ? '\u2193' : '\u2192'
+                const trendColor = item.psRatio > prevPS ? '#c62828' : item.psRatio < prevPS ? '#2e7d32' : '#666'
+                return (
+                  <View className='history-table-row' key={item.date}>
+                    <Text className='history-table-td'>{item.date}</Text>
+                    <Text className='history-table-td'>{item.psRatio.toFixed(1)}x</Text>
+                    <Text className='history-table-td'>${item.price.toFixed(0)}</Text>
+                    <Text className='history-table-td' style={{ color: trendColor }}>{trend} {item.psRatio > prevPS ? '上升' : item.psRatio < prevPS ? '下降' : '持平'}</Text>
+                  </View>
+                )
+              })}
             </View>
           </View>
 
@@ -252,6 +422,8 @@ export default function Dashboard() {
           ⚠️ 本工具仅供学习参考，不构成投资建议。投资有风险，决策需谨慎。
         </Text>
       </View>
+
+      <CustomTabBar />
     </View>
   )
 }
