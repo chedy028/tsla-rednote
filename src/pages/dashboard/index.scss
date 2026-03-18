@@ -8,6 +8,16 @@
   .header {
     margin-bottom: 32px;
 
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .header-left {
+      flex: 1;
+    }
+
     .title {
       display: block;
       font-size: 48px;
@@ -20,6 +30,31 @@
       font-size: 28px;
       color: #666;
       margin-top: 8px;
+    }
+
+    .share-button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f0f0f0;
+      padding: 12px 24px;
+      border-radius: 20px;
+      flex-shrink: 0;
+      margin-top: 8px;
+
+      &:active {
+        background: #e0e0e0;
+      }
+
+      .share-icon {
+        font-size: 28px;
+      }
+
+      .share-text {
+        font-size: 24px;
+        color: #666;
+        font-weight: 500;
+      }
     }
   }
 

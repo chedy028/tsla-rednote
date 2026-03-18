@@ -4,6 +4,7 @@ import Taro from '@tarojs/taro'
 import { fetchTSLAData, getUpdateTimeText, type TSLAStockData } from '../../services/stockApi'
 import { checkSubscription } from '../../services/payment'
 import { HISTORICAL_PS_DATA, getHistoricalPercentile } from '../../services/valuation'
+import { isTikTokMinis, onTikTokShare, shareTikTok, getShareContent } from '../../services/tiktokMinis'
 import CustomTabBar from '../../components/CustomTabBar'
 import './index.scss'
 
@@ -133,6 +134,50 @@ export default function Dashboard() {
     Taro.navigateTo({ url: '/pages/ai-assistant/index' })
   }
 
+  // TikTok Minis: 分享功能
+  const handleShare = useCallback(() => {
+    if (!tslaData) return
+
+    if (isTikTokMinis()) {
+      // TikTok 环境: 使用 TikTok Minis SDK 分享
+      const shareOpts = getShareContent(
+        tslaData.price,
+        tslaData.psRatio,
+        tslaData.valuationTier.textCn
+      )
+      shareTikTok(shareOpts)
+        .then(() => Taro.showToast({ title: '分享成功!', icon: 'success' }))
+        .catch(() => Taro.showToast({ title: '分享失败', icon: 'none' }))
+    } else if (typeof navigator !== 'undefined' && navigator.share) {
+      // Web Share API (移动浏览器)
+      navigator.share({
+        title: `TSLA $${tslaData.price.toFixed(2)} | P/S ${tslaData.psRatio.toFixed(2)}x`,
+        text: `特斯拉估值助手 - 当前估值: ${tslaData.valuationTier.textCn}`,
+        url: window.location.href
+      }).catch(() => {})
+    } else {
+      // 复制链接
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(window.location.href)
+        Taro.showToast({ title: '链接已复制', icon: 'success' })
+      }
+    }
+  }, [tslaData])
+
+  // TikTok Minis: 注册原生分享事件
+  useEffect(() => {
+    if (isTikTokMinis() && tslaData) {
+      onTikTokShare(() => {
+        const shareOpts = getShareContent(
+          tslaData.price,
+          tslaData.psRatio,
+          tslaData.valuationTier.textCn
+        )
+        shareTikTok(shareOpts).catch(() => {})
+      })
+    }
+  }, [tslaData])
+
   if (loading) {
     return (
       <View className='dashboard loading'>
@@ -163,8 +208,16 @@ export default function Dashboard() {
     <View className='dashboard'>
       {/* Header */}
       <View className='header'>
-        <Text className='title'>特斯拉 (TSLA)</Text>
-        <Text className='subtitle'>Tesla, Inc.</Text>
+        <View className='header-top'>
+          <View className='header-left'>
+            <Text className='title'>特斯拉 (TSLA)</Text>
+            <Text className='subtitle'>Tesla, Inc.</Text>
+          </View>
+          <View className='share-button' onClick={handleShare}>
+            <Text className='share-icon'>📤</Text>
+            <Text className='share-text'>分享</Text>
+          </View>
+        </View>
       </View>
 
       {/* Price Card - FREE for all users */}

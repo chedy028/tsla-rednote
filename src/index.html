@@ -16,5 +16,42 @@
 </head>
 <body>
   <div id="app"></div>
+
+  <!-- TikTok Minis SDK -->
+  <script src="https://developers.tiktok.com/js/minis.js"></script>
+  <script>
+    // TikTok Minis SDK Initialization
+    // Set your client key here after registering at developers.tiktok.com
+    // Or set via URL param: ?tt_client_key=YOUR_KEY
+    window.__TIKTOK_MINIS_READY__ = false;
+    window.__TIKTOK_CLIENT_KEY__ = '';
+
+    (function() {
+      // Try to get client key from:
+      // 1. URL parameter (for testing)
+      // 2. Hardcoded value (set after registration)
+      var TIKTOK_CLIENT_KEY = '';  // <-- SET YOUR KEY HERE AFTER REGISTRATION
+
+      try {
+        var params = new URLSearchParams(window.location.search || window.location.hash.split('?')[1] || '');
+        var urlKey = params.get('tt_client_key');
+        if (urlKey) TIKTOK_CLIENT_KEY = urlKey;
+      } catch(e) {}
+
+      if (TIKTOK_CLIENT_KEY && typeof TTMinis !== 'undefined') {
+        try {
+          TTMinis.init({ clientKey: TIKTOK_CLIENT_KEY });
+          window.__TIKTOK_MINIS_READY__ = true;
+          window.__TIKTOK_CLIENT_KEY__ = TIKTOK_CLIENT_KEY;
+          console.log('[TikTok Minis] SDK initialized');
+        } catch(e) {
+          console.warn('[TikTok Minis] Init failed:', e);
+        }
+      }
+
+      // Detect TikTok in-app browser (for analytics/UI adaptation)
+      window.__IS_TIKTOK_BROWSER__ = /TikTok|musical_ly|BytedanceWebview/i.test(navigator.userAgent || '');
+    })();
+  </script>
 </body>
 </html>

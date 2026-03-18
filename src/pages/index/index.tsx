@@ -1,9 +1,22 @@
 import { View, Text, Button } from '@tarojs/components'
+import { useEffect } from 'react'
 import Taro from '@tarojs/taro'
+import { isTikTokMinis, onTikTokShare, shareTikTok } from '../../services/tiktokMinis'
 import CustomTabBar from '../../components/CustomTabBar'
 import './index.scss'
 
 export default function Index() {
+  // TikTok Minis: 注册分享事件
+  useEffect(() => {
+    if (isTikTokMinis()) {
+      onTikTokShare(() => {
+        shareTikTok({
+          title: 'TSLA 估值助手 - AI 驱动的特斯拉股票分析',
+          desc: '用 P/S 比率分析 TSLA 估值，AI 智能买卖信号，免费查看今日估值！',
+        }).catch(() => {})
+      })
+    }
+  }, [])
   const handleStart = () => {
     if (typeof window !== 'undefined') {
       window.location.hash = '#/pages/dashboard/index'
