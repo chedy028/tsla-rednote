@@ -1,4 +1,4 @@
-import { View, Text, Button } from '@tarojs/components'
+import { View, Text } from '@tarojs/components'
 import { navigateToView } from '../services/navigation'
 import CustomTabBar from './CustomTabBar'
 

@@ -5,6 +5,7 @@ import { fetchTSLAData, getUpdateTimeText, type TSLAStockData } from '../../serv
 import { checkSubscription } from '../../services/payment'
 import { HISTORICAL_PS_DATA, getHistoricalPercentile } from '../../services/valuation'
 import { isTikTokMinis, onTikTokShare, shareTikTok, getShareContent } from '../../services/tiktokMinis'
+import { navigateToView } from '../../services/navigation'
 import CustomTabBar from '../../components/CustomTabBar'
 import './index.scss'
 
@@ -18,7 +19,7 @@ interface BuySellSignal {
   reasons: string[]
 }
 
-function getBuySellSignal(psRatio: number, changePercent: number): BuySellSignal {
+function getBuySellSignal(psRatio: number): BuySellSignal {
   const percentile = getHistoricalPercentile(psRatio)
   const historicalAvg = HISTORICAL_PS_DATA.reduce((sum, d) => sum + d.psRatio, 0) / HISTORICAL_PS_DATA.length
 
@@ -127,13 +128,7 @@ export default function Dashboard() {
   }, [tslaData])
 
   const handleUpgrade = () => {
-    if (typeof window !== 'undefined') {
-      // Use navigation service to avoid Taro router conflicts
-      const { navigateToView } = require('../../services/navigation')
-      navigateToView('pricing')
-    } else {
-      Taro.reLaunch({ url: '/pages/pricing/index' })
-    }
+    navigateToView('pricing')
   }
 
   const handleOpenAI = () => {
@@ -289,7 +284,7 @@ export default function Dashboard() {
 
       {/* Buy/Sell Signal - FREE for all users */}
       {(() => {
-        const signal = getBuySellSignal(tslaData.psRatio, tslaData.changePercent)
+        const signal = getBuySellSignal(tslaData.psRatio)
         return (
           <View className='signal-card'>
             <View className='signal-header'>
@@ -364,8 +359,7 @@ export default function Dashboard() {
                 </Text>
               </View>
               <View className='history-bar-chart'>
-                {HISTORICAL_PS_DATA.map((item, idx) => {
-                  const maxPS = Math.max(...HISTORICAL_PS_DATA.map(d => d.psRatio))
+                {(() => { const maxPS = Math.max(...HISTORICAL_PS_DATA.map(d => d.psRatio)); return HISTORICAL_PS_DATA.map((item, idx) => {
                   const barWidth = Math.round((item.psRatio / maxPS) * 100)
                   const prevPS = idx > 0 ? HISTORICAL_PS_DATA[idx - 1].psRatio : item.psRatio
                   const trend = item.psRatio > prevPS ? '\u2191' : item.psRatio < prevPS ? '\u2193' : '\u2192'
@@ -386,7 +380,7 @@ export default function Dashboard() {
                       <Text className='history-bar-trend' style={{ color: trendColor }}>{trend}</Text>
                     </View>
                   )
-                })}
+                })})()}
               </View>
               {/* 当前值对比 */}
               <View className='history-current'>

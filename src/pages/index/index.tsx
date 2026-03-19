@@ -56,8 +56,6 @@ function DashboardInline() {
     )
   }
 
-  const valuation = tslaData.valuationTier
-
   return (
     <View style={{ minHeight: '100vh', background: '#f8f9fa', padding: '24px' }}>
       {/* Header */}
