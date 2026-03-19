@@ -44,7 +44,12 @@ export default function Pricing() {
         if (result.success) {
           Taro.showToast({ title: result.message, icon: 'success' })
           setTimeout(() => {
-            Taro.reLaunch({ url: '/pages/dashboard/index' })
+            if (typeof window !== 'undefined') {
+              const { navigateToView } = require('../../services/navigation')
+              navigateToView('dashboard')
+            } else {
+              Taro.reLaunch({ url: '/pages/dashboard/index' })
+            }
           }, 1500)
         } else {
           Taro.showToast({ title: result.message, icon: 'none' })

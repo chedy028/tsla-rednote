@@ -17,8 +17,8 @@
 <body>
   <div id="app"></div>
 
-  <!-- TikTok Minis SDK -->
-  <script src="https://developers.tiktok.com/js/minis.js"></script>
+  <!-- TikTok Minis SDK (async to avoid blocking page load) -->
+  <script src="https://developers.tiktok.com/js/minis.js" async onerror="console.warn('[TikTok] SDK load failed')"></script>
   <script>
     // TikTok Minis SDK Initialization
     // Set your client key here after registering at developers.tiktok.com
