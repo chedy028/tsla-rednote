@@ -127,7 +127,13 @@ export default function Dashboard() {
   }, [tslaData])
 
   const handleUpgrade = () => {
-    Taro.reLaunch({ url: '/pages/pricing/index' })
+    if (typeof window !== 'undefined') {
+      // Use navigation service to avoid Taro router conflicts
+      const { navigateToView } = require('../../services/navigation')
+      navigateToView('pricing')
+    } else {
+      Taro.reLaunch({ url: '/pages/pricing/index' })
+    }
   }
 
   const handleOpenAI = () => {

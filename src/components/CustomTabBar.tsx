@@ -1,13 +1,16 @@
 /**
  * 自定义 TabBar 组件
- * 解决 Taro H5 模式下原生 tabBar switchTab 页面不渲染的问题
- * 使用 Taro.reLaunch 代替 switchTab
+ * H5 模式: 使用 custom event 切换视图 (完全绕过 Taro 路由)
+ * 小程序模式: 使用 Taro.reLaunch
  */
 import { View, Text } from '@tarojs/components'
+import { useState, useEffect } from 'react'
 import Taro, { useRouter } from '@tarojs/taro'
+import { navigateToView, getCurrentView, onViewChange, type AppView } from '../services/navigation'
 import './CustomTabBar.scss'
 
 interface TabItem {
+  viewName: AppView
   pagePath: string
   text: string
   icon: string
@@ -16,18 +19,21 @@ interface TabItem {
 
 const TABS: TabItem[] = [
   {
+    viewName: 'home',
     pagePath: '/pages/index/index',
     text: '首页',
     icon: '🏠',
     activeIcon: '🏠'
   },
   {
+    viewName: 'dashboard',
     pagePath: '/pages/dashboard/index',
     text: '仪表板',
     icon: '📊',
     activeIcon: '📊'
   },
   {
+    viewName: 'pricing',
     pagePath: '/pages/pricing/index',
     text: '订阅',
     icon: '💎',
@@ -37,31 +43,40 @@ const TABS: TabItem[] = [
 
 export default function CustomTabBar() {
   const router = useRouter()
-  const currentPath = '/' + (router.path || 'pages/index/index')
-
-  const handleTabClick = (pagePath: string) => {
-    if (pagePath === currentPath) return
-
-    // H5 模式: 直接修改 hash 并强制刷新页面
-    // Taro H5 router 的 reLaunch/switchTab 有已知的页面不渲染 bug
+  const [activeView, setActiveView] = useState<AppView>(() => {
     if (typeof window !== 'undefined') {
-      window.location.hash = '#' + pagePath
-      window.location.reload()
+      return getCurrentView()
+    }
+    const path = router.path || 'pages/index/index'
+    if (path.includes('dashboard')) return 'dashboard'
+    if (path.includes('pricing')) return 'pricing'
+    return 'home'
+  })
+
+  // Listen for view change events
+  useEffect(() => {
+    return onViewChange(setActiveView)
+  }, [])
+
+  const handleTabClick = (tab: TabItem) => {
+    if (tab.viewName === activeView) return
+
+    if (typeof window !== 'undefined') {
+      navigateToView(tab.viewName)
     } else {
-      Taro.reLaunch({ url: pagePath })
+      Taro.reLaunch({ url: tab.pagePath })
     }
   }
 
   return (
     <View className='custom-tabbar'>
       {TABS.map(tab => {
-        const isActive = currentPath.includes(tab.pagePath.replace('/pages/', 'pages/'))
-          || currentPath === tab.pagePath
+        const isActive = activeView === tab.viewName
         return (
           <View
-            key={tab.pagePath}
+            key={tab.viewName}
             className={`tabbar-item ${isActive ? 'active' : ''}`}
-            onClick={() => handleTabClick(tab.pagePath)}
+            onClick={() => handleTabClick(tab)}
           >
             <Text className='tabbar-icon'>
               {isActive ? tab.activeIcon : tab.icon}
