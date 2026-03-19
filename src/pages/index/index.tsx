@@ -147,6 +147,9 @@ function PricingInline() {
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ 买卖信号分析</Text>
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ 90天历史走势图</Text>
         </View>
+        <Button onClick={() => { /* TODO: integrate payment */ }} style={{ width: '100%', background: '#00d4aa', color: 'white', fontSize: '28px', fontWeight: 'bold', borderRadius: '12px', padding: '16px', border: 'none', marginTop: '20px' }}>
+          订阅基础版
+        </Button>
       </View>
 
       {/* Pro Plan */}
@@ -160,6 +163,9 @@ function PricingInline() {
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ 价格预警通知</Text>
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ 多股票分析</Text>
         </View>
+        <Button onClick={() => { /* TODO: integrate payment */ }} style={{ width: '100%', background: '#6c5ce7', color: 'white', fontSize: '28px', fontWeight: 'bold', borderRadius: '12px', padding: '16px', border: 'none', marginTop: '20px' }}>
+          订阅 Pro 版
+        </Button>
       </View>
 
       <View onClick={() => navigateToView('dashboard')} style={{ textAlign: 'center', padding: '16px', marginBottom: '120px' }}>
@@ -223,14 +229,14 @@ export default function Index() {
             <Text className='tagline'>AI 驱动的估值分析，用 P/S 比率抓住最佳买点</Text>
           </View>
 
-          {/* Free Value Teaser */}
+          {/* Free Value Teaser - no thresholds revealed */}
           <View className='valuation-teaser'>
             <Text className='teaser-label'>今日 TSLA 估值速览</Text>
             <View className='teaser-gauge'>
-              <Text className='teaser-emoji'>🟡</Text>
-              <Text className='teaser-tier'>合理估值区间</Text>
+              <Text className='teaser-emoji'>📊</Text>
+              <Text className='teaser-tier'>点击查看 P/S 指标</Text>
             </View>
-            <Text className='teaser-hint'>进入查看详细 P/S 比率分析 →</Text>
+            <Text className='teaser-hint'>进入查看实时估值数据 →</Text>
           </View>
 
           {/* Features */}
