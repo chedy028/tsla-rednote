@@ -1,10 +1,10 @@
 /**
  * i18n — Internationalization service
- * Supports: zh (Chinese), en (English), es (Spanish)
+ * Supports: zh (Chinese), en (English), es (Spanish), ja (Japanese), ko (Korean)
  * Default: auto-detect from browser, fallback to zh
  */
 
-export type Lang = 'zh' | 'en' | 'es'
+export type Lang = 'zh' | 'en' | 'es' | 'ja' | 'ko'
 
 const LANG_KEY = '__APP_LANG__'
 const LANG_CHANGE_EVENT = 'app-lang-change'
@@ -220,6 +220,146 @@ const translations: Record<Lang, Record<string, string>> = {
     'tab.home': 'Inicio',
     'tab.dashboard': 'Panel',
     'tab.subscribe': 'Planes',
+  },
+
+  ja: {
+    // App
+    'app.title': 'テスラ バリュエーション',
+    'app.subtitle': 'TSLA Valuation Tracker',
+    'app.tagline': 'AI駆動のバリュエーション分析、P/Sレシオで最適なエントリーポイントを発見',
+
+    // Home
+    'home.teaser.label': '本日のTSLAバリュエーション',
+    'home.teaser.emoji': '🟡',
+    'home.teaser.tier': '適正価格帯',
+    'home.teaser.hint': '詳細なP/Sレシオ分析を見る →',
+    'home.feature.price': 'リアルタイム価格',
+    'home.feature.price.desc': '15分ごとに更新',
+    'home.feature.ai': 'AIアナリスト',
+    'home.feature.ai.desc': 'スマート分析',
+    'home.feature.signal': 'バリュエーション状態',
+    'home.feature.signal.desc': 'ヒストリカルパーセンタイル',
+    'home.cta': '今日の無料バリュエーションを見る',
+    'home.pricing.tag': '月額$0.56〜 全機能をアンロック',
+    'home.pricing.sub': '1日わずか2¢ · 年払いで17%お得',
+    'home.disclaimer': '📚 教育ツール · 投資アドバイスではありません',
+    'home.stats.s1.icon': '📊',
+    'home.stats.s1.label': 'P/Sバリュエーションモデル',
+    'home.stats.s2.icon': '⏱️',
+    'home.stats.s2.label': '15分データ更新',
+    'home.stats.s3.icon': '🚀',
+    'home.stats.s3.label': '早期ユーザーに参加',
+
+    // Dashboard
+    'dash.name': 'テスラ (TSLA)',
+    'dash.company': 'Tesla, Inc.',
+    'dash.loading': 'バリュエーションデータを読み込み中...',
+    'dash.error': 'データの読み込みに失敗しました。再試行してください。',
+    'dash.ps.title': 'P/S バリュエーション',
+    'dash.ps.label': '株価売上高倍率 (Price-to-Sales)',
+    'dash.ps.locked': '🔒 サブスクで詳細バリュエーション分析をアンロック',
+    'dash.stat.mcap': '時価総額',
+    'dash.stat.rev': '売上高 (TTM)',
+    'dash.stat.vol': '出来高',
+    'dash.stat.range': '52週レンジ',
+    'dash.upgrade': '月額$0.56〜 全機能をアンロック',
+    'dash.upgrade.sub': 'AI分析 · 価格履歴 · アラート',
+    'dash.ps.what': 'P/Sレシオとは？',
+    'dash.ps.explain': 'P/S（株価売上高倍率）= 時価総額 ÷ 売上高。バリュエーション分析の重要な指標です。サブスクで詳細な分析をご覧ください。',
+    'dash.disclaimer': '⚠️ 教育目的のみ。投資アドバイスではありません。',
+
+    // Pricing
+    'pricing.title': 'サブスクリプションプラン',
+    'pricing.basic': 'ベーシック',
+    'pricing.basic.price': '$0.56/月',
+    'pricing.basic.annual': '$6.70/年 · 1日わずか2¢',
+    'pricing.basic.f1': '✅ リアルタイムP/Sバリュエーション',
+    'pricing.basic.f2': '✅ バリュエーション状態分析',
+    'pricing.basic.f3': '✅ 90日間ヒストリーチャート',
+    'pricing.pro': 'Pro',
+    'pricing.pro.price': '$1.13/月',
+    'pricing.pro.annual': '$13.50/年 · 1日わずか4¢',
+    'pricing.pro.f1': '✅ ベーシック全機能',
+    'pricing.pro.f2': '✅ AI深層バリュエーションレポート',
+    'pricing.pro.f3': '✅ AIスマートQ&Aアシスタント',
+    'pricing.pro.f4': '✅ 価格アラート',
+    'pricing.pro.f5': '✅ 広告なし体験',
+    'pricing.back': '← ダッシュボードに戻る',
+
+    // Tab bar
+    'tab.home': 'ホーム',
+    'tab.dashboard': 'ダッシュボード',
+    'tab.subscribe': 'プラン',
+  },
+
+  ko: {
+    // App
+    'app.title': 'TSLA 밸류에이션',
+    'app.subtitle': 'TSLA Valuation Tracker',
+    'app.tagline': 'AI 기반 밸류에이션 분석, P/S 비율로 최적의 매수 시점 포착',
+
+    // Home
+    'home.teaser.label': '오늘의 TSLA 밸류에이션',
+    'home.teaser.emoji': '🟡',
+    'home.teaser.tier': '적정 가치 구간',
+    'home.teaser.hint': '상세 P/S 비율 분석 보기 →',
+    'home.feature.price': '실시간 가격',
+    'home.feature.price.desc': '15분마다 업데이트',
+    'home.feature.ai': 'AI 애널리스트',
+    'home.feature.ai.desc': '스마트 밸류에이션 분석',
+    'home.feature.signal': '밸류에이션 상태',
+    'home.feature.signal.desc': '히스토리컬 백분위',
+    'home.cta': '오늘의 무료 밸류에이션 보기',
+    'home.pricing.tag': '월 $0.56부터 — 전체 기능 잠금 해제',
+    'home.pricing.sub': '하루 2¢ · 연간 플랜 17% 할인',
+    'home.disclaimer': '📚 교육 도구 · 투자 조언이 아닙니다',
+    'home.stats.s1.icon': '📊',
+    'home.stats.s1.label': 'P/S 밸류에이션 모델',
+    'home.stats.s2.icon': '⏱️',
+    'home.stats.s2.label': '15분 데이터 업데이트',
+    'home.stats.s3.icon': '🚀',
+    'home.stats.s3.label': '얼리 유저 참여',
+
+    // Dashboard
+    'dash.name': '테슬라 (TSLA)',
+    'dash.company': 'Tesla, Inc.',
+    'dash.loading': '밸류에이션 데이터 로딩 중...',
+    'dash.error': '데이터 로드 실패. 다시 시도해 주세요.',
+    'dash.ps.title': 'P/S 밸류에이션',
+    'dash.ps.label': '주가매출비율 (Price-to-Sales)',
+    'dash.ps.locked': '🔒 구독하여 상세 밸류에이션 분석 잠금 해제',
+    'dash.stat.mcap': '시가총액',
+    'dash.stat.rev': '매출 (TTM)',
+    'dash.stat.vol': '거래량',
+    'dash.stat.range': '52주 범위',
+    'dash.upgrade': '월 $0.56부터 — 전체 기능 잠금 해제',
+    'dash.upgrade.sub': 'AI 분석 · 가격 히스토리 · 알림',
+    'dash.ps.what': 'P/S 비율이란?',
+    'dash.ps.explain': 'P/S (주가매출비율) = 시가총액 ÷ 매출. 밸류에이션 분석의 핵심 지표입니다. 구독하면 상세 분석을 볼 수 있습니다.',
+    'dash.disclaimer': '⚠️ 교육 목적으로만 사용. 투자 조언이 아닙니다.',
+
+    // Pricing
+    'pricing.title': '구독 플랜',
+    'pricing.basic': '베이직',
+    'pricing.basic.price': '$0.56/월',
+    'pricing.basic.annual': '$6.70/년 · 하루 2¢',
+    'pricing.basic.f1': '✅ 실시간 P/S 밸류에이션',
+    'pricing.basic.f2': '✅ 밸류에이션 상태 분석',
+    'pricing.basic.f3': '✅ 90일 히스토리 차트',
+    'pricing.pro': 'Pro',
+    'pricing.pro.price': '$1.13/월',
+    'pricing.pro.annual': '$13.50/년 · 하루 4¢',
+    'pricing.pro.f1': '✅ 베이직 전체 기능',
+    'pricing.pro.f2': '✅ AI 심층 밸류에이션 리포트',
+    'pricing.pro.f3': '✅ AI 스마트 Q&A 어시스턴트',
+    'pricing.pro.f4': '✅ 가격 알림',
+    'pricing.pro.f5': '✅ 광고 없는 경험',
+    'pricing.back': '← 대시보드로 돌아가기',
+
+    // Tab bar
+    'tab.home': '홈',
+    'tab.dashboard': '대시보드',
+    'tab.subscribe': '플랜',
   }
 }
 
@@ -240,6 +380,8 @@ function detectLanguage(): Lang {
 
   // Auto-detect from browser
   const browserLang = navigator.language?.toLowerCase() || ''
+  if (browserLang.startsWith('ja')) return 'ja'
+  if (browserLang.startsWith('ko')) return 'ko'
   if (browserLang.startsWith('es')) return 'es'
   if (browserLang.startsWith('en')) return 'en'
   if (browserLang.startsWith('zh')) return 'zh'
@@ -283,7 +425,9 @@ export function t(key: string): string {
 export const LANG_NAMES: Record<Lang, string> = {
   zh: '中文',
   en: 'English',
-  es: 'Español'
+  es: 'Español',
+  ja: '日本語',
+  ko: '한국어'
 }
 
-export const ALL_LANGS: Lang[] = ['zh', 'en', 'es']
+export const ALL_LANGS: Lang[] = ['zh', 'en', 'es', 'ja', 'ko']
