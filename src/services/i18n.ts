@@ -62,6 +62,11 @@ const translations: Record<Lang, Record<string, string>> = {
     'dash.ps.what': '什么是 P/S 比率？',
     'dash.ps.explain': 'P/S (市销率) = 市值 ÷ 营收，是衡量公司估值的核心指标。订阅后可查看详细估值区间分析。',
     'dash.disclaimer': '⚠️ 本工具仅供学习参考，不构成投资建议',
+    'dash.restore': '已经订阅了？恢复购买',
+    'dash.restore.placeholder': '输入订阅邮箱',
+    'dash.restore.verify': '验证',
+    'dash.restore.checking': '验证中...',
+    'dash.restore.notfound': '未找到此邮箱的订阅记录',
 
     // Pricing
     'pricing.title': '订阅方案',
@@ -140,6 +145,11 @@ const translations: Record<Lang, Record<string, string>> = {
     'dash.ps.what': 'What is P/S Ratio?',
     'dash.ps.explain': 'P/S (Price-to-Sales) = Market Cap ÷ Revenue. A key metric for valuation analysis. Subscribe to see detailed valuation zone analysis.',
     'dash.disclaimer': '⚠️ For educational purposes only. Not investment advice.',
+    'dash.restore': 'Already subscribed? Restore purchase',
+    'dash.restore.placeholder': 'Enter your email',
+    'dash.restore.verify': 'Verify',
+    'dash.restore.checking': 'Checking...',
+    'dash.restore.notfound': 'No active subscription found for this email',
 
     // Pricing
     'pricing.title': 'Subscription Plans',
@@ -218,6 +228,11 @@ const translations: Record<Lang, Record<string, string>> = {
     'dash.ps.what': '¿Qué es el ratio P/V?',
     'dash.ps.explain': 'P/V (Precio/Ventas) = Cap. de Mercado ÷ Ingresos. Una métrica clave para el análisis de valoración. Suscríbete para ver análisis detallado.',
     'dash.disclaimer': '⚠️ Solo con fines educativos. No es consejo de inversión.',
+    'dash.restore': '¿Ya estás suscrito? Restaurar compra',
+    'dash.restore.placeholder': 'Ingresa tu email',
+    'dash.restore.verify': 'Verificar',
+    'dash.restore.checking': 'Verificando...',
+    'dash.restore.notfound': 'No se encontró suscripción activa para este email',
 
     // Pricing
     'pricing.title': 'Planes de suscripción',
@@ -296,6 +311,11 @@ const translations: Record<Lang, Record<string, string>> = {
     'dash.ps.what': 'P/Sレシオとは？',
     'dash.ps.explain': 'P/S（株価売上高倍率）= 時価総額 ÷ 売上高。バリュエーション分析の重要な指標です。サブスクで詳細な分析をご覧ください。',
     'dash.disclaimer': '⚠️ 教育目的のみ。投資アドバイスではありません。',
+    'dash.restore': '既にサブスク済み？購入を復元',
+    'dash.restore.placeholder': 'メールアドレスを入力',
+    'dash.restore.verify': '確認',
+    'dash.restore.checking': '確認中...',
+    'dash.restore.notfound': 'このメールアドレスのサブスクが見つかりません',
 
     // Pricing
     'pricing.title': 'サブスクリプションプラン',
@@ -374,6 +394,11 @@ const translations: Record<Lang, Record<string, string>> = {
     'dash.ps.what': 'P/S 비율이란?',
     'dash.ps.explain': 'P/S (주가매출비율) = 시가총액 ÷ 매출. 밸류에이션 분석의 핵심 지표입니다. 구독하면 상세 분석을 볼 수 있습니다.',
     'dash.disclaimer': '⚠️ 교육 목적으로만 사용. 투자 조언이 아닙니다.',
+    'dash.restore': '이미 구독하셨나요? 구매 복원',
+    'dash.restore.placeholder': '이메일을 입력하세요',
+    'dash.restore.verify': '확인',
+    'dash.restore.checking': '확인 중...',
+    'dash.restore.notfound': '이 이메일로 활성 구독을 찾을 수 없습니다',
 
     // Pricing
     'pricing.title': '구독 플랜',

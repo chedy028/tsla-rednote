@@ -4,7 +4,7 @@ import { isTikTokMinis, onTikTokShare, shareTikTok } from '../../services/tiktok
 import { navigateToView, getCurrentView, onViewChange, type AppView } from '../../services/navigation'
 import { fetchTSLAData, getUpdateTimeText, type TSLAStockData } from '../../services/stockApi'
 import { t, getCurrentLang, setLang, onLangChange, ALL_LANGS, LANG_NAMES, type Lang } from '../../services/i18n'
-import { openStripeCheckout, handlePaymentRedirect, getCachedSubscription, type SubscriptionStatus } from '../../services/stripe'
+import { openStripeCheckout, handlePaymentRedirect, getCachedSubscription, checkSubscriptionByEmail, type SubscriptionStatus } from '../../services/stripe'
 import CustomTabBar from '../../components/CustomTabBar'
 import './index.scss'
 
@@ -58,6 +58,10 @@ function DashboardInline() {
   const [, setLangTick] = useState(0)
   const [isPro, setIsPro] = useState(false)
   const [paymentMessage, setPaymentMessage] = useState<string | null>(null)
+  const [showRestore, setShowRestore] = useState(false)
+  const [restoreEmail, setRestoreEmail] = useState('')
+  const [restoreLoading, setRestoreLoading] = useState(false)
+  const [restoreError, setRestoreError] = useState<string | null>(null)
 
   // Re-render on language change
   useEffect(() => {
@@ -195,6 +199,59 @@ function DashboardInline() {
         <View role='button' tabIndex={0} onClick={() => navigateToView('pricing')} style={{ background: 'linear-gradient(135deg, #00d4aa, #00b894)', borderRadius: '16px', padding: '24px', textAlign: 'center', marginBottom: '16px', cursor: 'pointer' }}>
           <Text style={{ fontSize: '28px', fontWeight: 'bold', color: 'white', display: 'block' }}>{t('dash.upgrade')}</Text>
           <Text style={{ fontSize: '22px', color: 'rgba(255,255,255,0.8)', display: 'block', marginTop: '8px' }}>{t('dash.upgrade.sub')}</Text>
+        </View>
+      )}
+
+      {/* Restore Purchase - only show for free users */}
+      {!isPro && (
+        <View style={{ textAlign: 'center', marginBottom: '16px' }}>
+          {!showRestore ? (
+            <View role='button' tabIndex={0} onClick={() => setShowRestore(true)} style={{ cursor: 'pointer', padding: '8px' }}>
+              <Text style={{ fontSize: '22px', color: '#00d4aa', textDecoration: 'underline' }}>{t('dash.restore')}</Text>
+            </View>
+          ) : (
+            <View style={{ background: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+              <View style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input
+                  type='email'
+                  placeholder={t('dash.restore.placeholder')}
+                  value={restoreEmail}
+                  onChange={(e) => { setRestoreEmail((e.target as HTMLInputElement).value); setRestoreError(null) }}
+                  style={{ flex: 1, padding: '12px 16px', borderRadius: '8px', border: '2px solid #e0e0e0', fontSize: '16px', outline: 'none' }}
+                />
+                <View
+                  role='button' tabIndex={0}
+                  onClick={async () => {
+                    if (!restoreEmail || restoreLoading) return
+                    setRestoreLoading(true)
+                    setRestoreError(null)
+                    try {
+                      const result = await checkSubscriptionByEmail(restoreEmail)
+                      if (result.isActive) {
+                        setIsPro(true)
+                        setPaymentMessage(t('dash.payment.success'))
+                        setShowRestore(false)
+                        setTimeout(() => setPaymentMessage(null), 5000)
+                      } else {
+                        setRestoreError(t('dash.restore.notfound'))
+                      }
+                    } catch {
+                      setRestoreError(t('dash.restore.notfound'))
+                    }
+                    setRestoreLoading(false)
+                  }}
+                  style={{ background: '#00d4aa', borderRadius: '8px', padding: '12px 20px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  <Text style={{ fontSize: '20px', fontWeight: 'bold', color: 'white' }}>
+                    {restoreLoading ? t('dash.restore.checking') : t('dash.restore.verify')}
+                  </Text>
+                </View>
+              </View>
+              {restoreError && (
+                <Text style={{ fontSize: '20px', color: '#c62828', display: 'block', marginTop: '8px' }}>{restoreError}</Text>
+              )}
+            </View>
+          )}
         </View>
       )}
 
