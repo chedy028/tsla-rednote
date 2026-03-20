@@ -7,12 +7,13 @@ import { View, Text } from '@tarojs/components'
 import { useState, useEffect } from 'react'
 import Taro, { useRouter } from '@tarojs/taro'
 import { navigateToView, getCurrentView, onViewChange, type AppView } from '../services/navigation'
+import { t, onLangChange } from '../services/i18n'
 import './CustomTabBar.scss'
 
 interface TabItem {
   viewName: AppView
   pagePath: string
-  text: string
+  textKey: string
   icon: string
   activeIcon: string
 }
@@ -21,21 +22,21 @@ const TABS: TabItem[] = [
   {
     viewName: 'home',
     pagePath: '/pages/index/index',
-    text: '首页',
+    textKey: 'tab.home',
     icon: '🏠',
     activeIcon: '🏠'
   },
   {
     viewName: 'dashboard',
     pagePath: '/pages/dashboard/index',
-    text: '仪表板',
+    textKey: 'tab.dashboard',
     icon: '📊',
     activeIcon: '📊'
   },
   {
     viewName: 'pricing',
     pagePath: '/pages/pricing/index',
-    text: '订阅',
+    textKey: 'tab.subscribe',
     icon: '💎',
     activeIcon: '💎'
   }
@@ -52,10 +53,16 @@ export default function CustomTabBar() {
     if (path.includes('pricing')) return 'pricing'
     return 'home'
   })
+  const [, setLangTick] = useState(0)
 
   // Listen for view change events
   useEffect(() => {
     return onViewChange(setActiveView)
+  }, [])
+
+  // Re-render on language change
+  useEffect(() => {
+    return onLangChange(() => setLangTick(n => n + 1))
   }, [])
 
   const handleTabClick = (tab: TabItem) => {
@@ -81,7 +88,7 @@ export default function CustomTabBar() {
             <Text className='tabbar-icon'>
               {isActive ? tab.activeIcon : tab.icon}
             </Text>
-            <Text className='tabbar-text'>{tab.text}</Text>
+            <Text className='tabbar-text'>{t(tab.textKey)}</Text>
           </View>
         )
       })}
