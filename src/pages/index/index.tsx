@@ -4,6 +4,7 @@ import { isTikTokMinis, onTikTokShare, shareTikTok } from '../../services/tiktok
 import { navigateToView, getCurrentView, onViewChange, type AppView } from '../../services/navigation'
 import { fetchTSLAData, getUpdateTimeText, type TSLAStockData } from '../../services/stockApi'
 import { t, getCurrentLang, setLang, onLangChange, ALL_LANGS, LANG_NAMES, type Lang } from '../../services/i18n'
+import { openStripeCheckout } from '../../services/stripe'
 import CustomTabBar from '../../components/CustomTabBar'
 import './index.scss'
 
@@ -176,8 +177,21 @@ function DashboardInline() {
 
 function PricingInline() {
   const [, setLangTick] = useState(0)
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
+
   useEffect(() => {
     return onLangChange(() => setLangTick(n => n + 1))
+  }, [])
+
+  const handleSubscribe = useCallback(async (plan: 'basic' | 'pro', billing: 'monthly' | 'annual') => {
+    const key = `${plan}-${billing}`
+    setLoadingPlan(key)
+    try {
+      await openStripeCheckout(plan, billing)
+    } catch (err) {
+      console.error('Checkout error:', err)
+      setLoadingPlan(null)
+    }
   }, [])
 
   return (
@@ -197,6 +211,25 @@ function PricingInline() {
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.basic.f2')}</Text>
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.basic.f3')}</Text>
         </View>
+        {/* Subscribe buttons */}
+        <View
+          role='button' tabIndex={0}
+          onClick={() => handleSubscribe('basic', 'monthly')}
+          style={{ background: '#00d4aa', borderRadius: '12px', padding: '14px', textAlign: 'center', marginTop: '16px', cursor: 'pointer' }}
+        >
+          <Text style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>
+            {loadingPlan === 'basic-monthly' ? t('pricing.subscribe.loading') : t('pricing.subscribe')}
+          </Text>
+        </View>
+        <View
+          role='button' tabIndex={0}
+          onClick={() => handleSubscribe('basic', 'annual')}
+          style={{ border: '2px solid #00d4aa', borderRadius: '12px', padding: '12px', textAlign: 'center', marginTop: '8px', cursor: 'pointer' }}
+        >
+          <Text style={{ fontSize: '22px', color: '#00d4aa' }}>
+            {loadingPlan === 'basic-annual' ? t('pricing.subscribe.loading') : t('pricing.or.annual')}
+          </Text>
+        </View>
       </View>
 
       {/* Pro Plan */}
@@ -210,6 +243,25 @@ function PricingInline() {
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.pro.f3')}</Text>
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.pro.f4')}</Text>
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.pro.f5')}</Text>
+        </View>
+        {/* Subscribe buttons */}
+        <View
+          role='button' tabIndex={0}
+          onClick={() => handleSubscribe('pro', 'monthly')}
+          style={{ background: '#6c5ce7', borderRadius: '12px', padding: '14px', textAlign: 'center', marginTop: '16px', cursor: 'pointer' }}
+        >
+          <Text style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>
+            {loadingPlan === 'pro-monthly' ? t('pricing.subscribe.loading') : t('pricing.subscribe')}
+          </Text>
+        </View>
+        <View
+          role='button' tabIndex={0}
+          onClick={() => handleSubscribe('pro', 'annual')}
+          style={{ border: '2px solid #6c5ce7', borderRadius: '12px', padding: '12px', textAlign: 'center', marginTop: '8px', cursor: 'pointer' }}
+        >
+          <Text style={{ fontSize: '22px', color: '#6c5ce7' }}>
+            {loadingPlan === 'pro-annual' ? t('pricing.subscribe.loading') : t('pricing.or.annual')}
+          </Text>
         </View>
       </View>
 
