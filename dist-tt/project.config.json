@@ -1,0 +1,15 @@
+{
+  "miniprogramRoot": "./",
+  "appid": "",
+  "setting": {
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "urlCheck": false,
+    "autoAudits": false,
+    "coverView": true
+  },
+  "compileType": "miniprogram",
+  "condition": {}
+}

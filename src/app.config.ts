@@ -3,7 +3,9 @@ export default defineAppConfig({
     'pages/index/index',
     'pages/dashboard/index',
     'pages/pricing/index',
-    'pages/ai-assistant/index'
+    'pages/ai-assistant/index',
+    'pages/terms/index',
+    'pages/privacy/index'
   ],
   window: {
     backgroundTextStyle: 'light',
