@@ -4,7 +4,7 @@ import { isTikTokMinis, onTikTokShare, shareTikTok } from '../../services/tiktok
 import { navigateToView, getCurrentView, onViewChange, type AppView } from '../../services/navigation'
 import { fetchTSLAData, getUpdateTimeText, type TSLAStockData } from '../../services/stockApi'
 import { t, getCurrentLang, setLang, onLangChange, ALL_LANGS, LANG_NAMES, type Lang } from '../../services/i18n'
-import { openStripeCheckout } from '../../services/stripe'
+import { openStripeCheckout, handlePaymentRedirect, getCachedSubscription, type SubscriptionStatus } from '../../services/stripe'
 import CustomTabBar from '../../components/CustomTabBar'
 import './index.scss'
 
@@ -56,10 +56,30 @@ function DashboardInline() {
   const [tslaData, setTslaData] = useState<TSLAStockData | null>(null)
   const [loading, setLoading] = useState(true)
   const [, setLangTick] = useState(0)
+  const [isPro, setIsPro] = useState(false)
+  const [paymentMessage, setPaymentMessage] = useState<string | null>(null)
 
   // Re-render on language change
   useEffect(() => {
     return onLangChange(() => setLangTick(n => n + 1))
+  }, [])
+
+  // Check subscription status
+  useEffect(() => {
+    // First check cached subscription
+    const cached = getCachedSubscription()
+    if (cached?.isActive) {
+      setIsPro(true)
+    }
+
+    // Then check if returning from Stripe checkout
+    handlePaymentRedirect().then(result => {
+      if (result?.isActive) {
+        setIsPro(true)
+        setPaymentMessage(t('dash.payment.success'))
+        setTimeout(() => setPaymentMessage(null), 5000)
+      }
+    })
   }, [])
 
   useEffect(() => {
@@ -120,14 +140,34 @@ function DashboardInline() {
         </Text>
       </View>
 
-      {/* Valuation - show P/S number only, no thresholds */}
+      {/* Payment success message */}
+      {paymentMessage && (
+        <View style={{ background: '#e8f5e9', borderRadius: '12px', padding: '16px', marginBottom: '16px', textAlign: 'center' }}>
+          <Text style={{ fontSize: '24px', color: '#2e7d32', fontWeight: 'bold' }}>{paymentMessage}</Text>
+        </View>
+      )}
+
+      {/* Valuation - Pro users see full analysis, free users see locked */}
       <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', textAlign: 'center' }}>
         <Text style={{ fontSize: '24px', fontWeight: 'bold', display: 'block', marginBottom: '16px' }}>{t('dash.ps.title')}</Text>
-        <Text style={{ fontSize: '56px', fontWeight: 'bold', display: 'block', color: '#333' }}>{tslaData.psRatio.toFixed(2)}x</Text>
+        <Text style={{ fontSize: '56px', fontWeight: 'bold', display: 'block', color: isPro ? (tslaData.psRatio < 10 ? '#2e7d32' : tslaData.psRatio < 15 ? '#f9a825' : '#c62828') : '#333' }}>{tslaData.psRatio.toFixed(2)}x</Text>
         <Text style={{ fontSize: '24px', color: '#666', display: 'block', marginTop: '8px' }}>{t('dash.ps.label')}</Text>
-        <View style={{ background: '#f0f0f0', borderRadius: '12px', padding: '12px 24px', marginTop: '16px' }}>
-          <Text style={{ fontSize: '22px', color: '#999' }}>{t('dash.ps.locked')}</Text>
-        </View>
+        {isPro ? (
+          <View style={{ marginTop: '16px' }}>
+            <View style={{ background: tslaData.psRatio < 10 ? '#e8f5e9' : tslaData.psRatio < 15 ? '#fff8e1' : '#fce4ec', borderRadius: '12px', padding: '12px 24px' }}>
+              <Text style={{ fontSize: '22px', fontWeight: 'bold', color: tslaData.psRatio < 10 ? '#2e7d32' : tslaData.psRatio < 15 ? '#f9a825' : '#c62828' }}>
+                {tslaData.psRatio < 10 ? t('dash.ps.undervalued') : tslaData.psRatio < 15 ? t('dash.ps.fair') : t('dash.ps.overvalued')}
+              </Text>
+            </View>
+            <View style={{ background: '#f0faf7', borderRadius: '8px', padding: '8px 16px', marginTop: '8px' }}>
+              <Text style={{ fontSize: '20px', color: '#00a884' }}>{t('dash.ps.subscribed')}</Text>
+            </View>
+          </View>
+        ) : (
+          <View style={{ background: '#f0f0f0', borderRadius: '12px', padding: '12px 24px', marginTop: '16px' }}>
+            <Text style={{ fontSize: '22px', color: '#999' }}>{t('dash.ps.locked')}</Text>
+          </View>
+        )}
       </View>
 
       {/* Stats Grid */}
@@ -150,11 +190,13 @@ function DashboardInline() {
         </View>
       </View>
 
-      {/* Upgrade CTA */}
-      <View role='button' tabIndex={0} onClick={() => navigateToView('pricing')} style={{ background: 'linear-gradient(135deg, #00d4aa, #00b894)', borderRadius: '16px', padding: '24px', textAlign: 'center', marginBottom: '16px', cursor: 'pointer' }}>
-        <Text style={{ fontSize: '28px', fontWeight: 'bold', color: 'white', display: 'block' }}>{t('dash.upgrade')}</Text>
-        <Text style={{ fontSize: '22px', color: 'rgba(255,255,255,0.8)', display: 'block', marginTop: '8px' }}>{t('dash.upgrade.sub')}</Text>
-      </View>
+      {/* Upgrade CTA - only show for free users */}
+      {!isPro && (
+        <View role='button' tabIndex={0} onClick={() => navigateToView('pricing')} style={{ background: 'linear-gradient(135deg, #00d4aa, #00b894)', borderRadius: '16px', padding: '24px', textAlign: 'center', marginBottom: '16px', cursor: 'pointer' }}>
+          <Text style={{ fontSize: '28px', fontWeight: 'bold', color: 'white', display: 'block' }}>{t('dash.upgrade')}</Text>
+          <Text style={{ fontSize: '22px', color: 'rgba(255,255,255,0.8)', display: 'block', marginTop: '8px' }}>{t('dash.upgrade.sub')}</Text>
+        </View>
+      )}
 
       {/* Info - no thresholds revealed */}
       <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px' }}>

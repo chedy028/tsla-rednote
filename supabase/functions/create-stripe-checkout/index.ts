@@ -92,12 +92,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // ── URLs ─────────────────────────────────────────────────────────────
 
-    const successUrl =
+    const baseSuccessUrl =
       Deno.env.get("STRIPE_SUCCESS_URL") ||
-      "https://chedy028.github.io/tsla-rednote/#/dashboard?payment=success";
+      "https://chedy028.github.io/tsla-rednote/";
     const cancelUrl =
       Deno.env.get("STRIPE_CANCEL_URL") ||
-      "https://chedy028.github.io/tsla-rednote/#/pricing?payment=cancelled";
+      "https://chedy028.github.io/tsla-rednote/";
+
+    // Append session_id to success URL so the client can verify the payment
+    const successUrl = `${baseSuccessUrl}?session_id={CHECKOUT_SESSION_ID}&payment=success`;
 
     // ── Create Stripe Checkout Session via API ───────────────────────────
 
