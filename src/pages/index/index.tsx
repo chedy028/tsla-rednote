@@ -5,6 +5,7 @@ import { navigateToView, getCurrentView, onViewChange, type AppView } from '../.
 import { fetchTSLAData, getUpdateTimeText, type TSLAStockData } from '../../services/stockApi'
 import { t, getCurrentLang, setLang, onLangChange, ALL_LANGS, LANG_NAMES, type Lang } from '../../services/i18n'
 import { openStripeCheckout, handlePaymentRedirect, getCachedSubscription, checkSubscriptionByEmail, type SubscriptionStatus } from '../../services/stripe'
+import { getDeepAnalysis, askAI, getProEmail, setProEmail, listAlerts, createAlert, deleteAlert, type AIAnalysisResult, type ChatMessage, type PriceAlert, type AlertType, generateMessageId } from '../../services/ai'
 import CustomTabBar from '../../components/CustomTabBar'
 import './index.scss'
 
@@ -63,6 +64,24 @@ function DashboardInline() {
   const [restoreLoading, setRestoreLoading] = useState(false)
   const [restoreError, setRestoreError] = useState<string | null>(null)
 
+  // Pro features state
+  const [proEmail, setProEmailState] = useState<string | null>(null)
+  const [showEmailInput, setShowEmailInput] = useState(false)
+  const [emailInput, setEmailInput] = useState('')
+  // AI Report
+  const [aiReport, setAiReport] = useState<AIAnalysisResult | null>(null)
+  const [reportLoading, setReportLoading] = useState(false)
+  // Q&A Chat
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+  const [chatInput, setChatInput] = useState('')
+  const [chatLoading, setChatLoading] = useState(false)
+  // Price Alerts
+  const [alerts, setAlerts] = useState<PriceAlert[]>([])
+  const [showAddAlert, setShowAddAlert] = useState(false)
+  const [alertType, setAlertType] = useState<AlertType>('price_above')
+  const [alertValue, setAlertValue] = useState('')
+  const [alertCreating, setAlertCreating] = useState(false)
+
   // Re-render on language change
   useEffect(() => {
     return onLangChange(() => setLangTick(n => n + 1))
@@ -76,6 +95,10 @@ function DashboardInline() {
       setIsPro(true)
     }
 
+    // Load Pro email
+    const email = getProEmail()
+    if (email) setProEmailState(email)
+
     // Then check if returning from Stripe checkout
     handlePaymentRedirect().then(result => {
       if (result?.isActive) {
@@ -85,6 +108,13 @@ function DashboardInline() {
       }
     })
   }, [])
+
+  // Load alerts when Pro + email available
+  useEffect(() => {
+    if (isPro && proEmail) {
+      listAlerts(proEmail).then(setAlerts).catch(() => {})
+    }
+  }, [isPro, proEmail])
 
   useEffect(() => {
     let cancelled = false
@@ -194,6 +224,245 @@ function DashboardInline() {
         </View>
       </View>
 
+      {/* ==================== PRO FEATURES ==================== */}
+      {isPro && (
+        <View>
+          {/* Email prompt for AI features */}
+          {!proEmail && !showEmailInput && (
+            <View role='button' tabIndex={0} onClick={() => setShowEmailInput(true)} style={{ background: '#fff3e0', borderRadius: '12px', padding: '16px', marginBottom: '16px', textAlign: 'center', cursor: 'pointer' }}>
+              <Text style={{ fontSize: '22px', color: '#e65100' }}>{t('pro.email.title')}</Text>
+            </View>
+          )}
+          {!proEmail && showEmailInput && (
+            <View style={{ background: 'white', borderRadius: '12px', padding: '16px', marginBottom: '16px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                type='email'
+                placeholder='email@example.com'
+                value={emailInput}
+                onChange={(e) => setEmailInput((e.target as HTMLInputElement).value)}
+                style={{ flex: 1, padding: '10px 14px', borderRadius: '8px', border: '2px solid #e0e0e0', fontSize: '16px', outline: 'none' }}
+              />
+              <View role='button' tabIndex={0} onClick={() => {
+                if (emailInput) {
+                  setProEmail(emailInput)
+                  setProEmailState(emailInput)
+                  setShowEmailInput(false)
+                }
+              }} style={{ background: '#6c5ce7', borderRadius: '8px', padding: '10px 20px', cursor: 'pointer' }}>
+                <Text style={{ fontSize: '20px', fontWeight: 'bold', color: 'white' }}>{t('pro.email.save')}</Text>
+              </View>
+            </View>
+          )}
+
+          {/* AI Valuation Report */}
+          <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+            <Text style={{ fontSize: '28px', fontWeight: 'bold', display: 'block', marginBottom: '16px' }}>{t('pro.report.title')}</Text>
+            {aiReport ? (
+              <View>
+                <Text style={{ fontSize: '20px', color: '#333', display: 'block', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{aiReport.content}</Text>
+                <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
+                  <Text style={{ fontSize: '18px', color: '#999' }}>
+                    {aiReport.source === 'ai' ? t('pro.report.powered') : ''} · {new Date(aiReport.timestamp).toLocaleTimeString()}
+                  </Text>
+                  <View role='button' tabIndex={0} onClick={async () => {
+                    if (!tslaData || reportLoading) return
+                    setReportLoading(true)
+                    try {
+                      localStorage.removeItem('tsla_ai_report')
+                      const result = await getDeepAnalysis(tslaData, proEmail || undefined)
+                      setAiReport(result)
+                    } catch {}
+                    setReportLoading(false)
+                  }} style={{ color: '#6c5ce7', cursor: 'pointer', padding: '4px 12px' }}>
+                    <Text style={{ fontSize: '20px', color: '#6c5ce7' }}>{reportLoading ? t('pro.report.loading') : t('pro.report.refresh')}</Text>
+                  </View>
+                </View>
+              </View>
+            ) : (
+              <View role='button' tabIndex={0} onClick={async () => {
+                if (!tslaData || reportLoading) return
+                setReportLoading(true)
+                try {
+                  const result = await getDeepAnalysis(tslaData, proEmail || undefined)
+                  setAiReport(result)
+                } catch {}
+                setReportLoading(false)
+              }} style={{ background: 'linear-gradient(135deg, #6c5ce7, #a29bfe)', borderRadius: '12px', padding: '16px', textAlign: 'center', cursor: 'pointer' }}>
+                <Text style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>
+                  {reportLoading ? t('pro.report.loading') : t('pro.report.generate')}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* AI Q&A Chat */}
+          <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+            <Text style={{ fontSize: '28px', fontWeight: 'bold', display: 'block', marginBottom: '16px' }}>{t('pro.qa.title')}</Text>
+
+            {/* Quick suggestion buttons */}
+            <View style={{ marginBottom: '12px' }}>
+              <Text style={{ fontSize: '18px', color: '#999', display: 'block', marginBottom: '8px' }}>{t('pro.qa.suggestions')}</Text>
+              <View style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {['pro.qa.s1', 'pro.qa.s2', 'pro.qa.s3'].map(key => (
+                  <View key={key} role='button' tabIndex={0} onClick={() => {
+                    const q = t(key)
+                    setChatInput(q)
+                  }} style={{ background: '#f0f0f0', borderRadius: '20px', padding: '8px 16px', cursor: 'pointer' }}>
+                    <Text style={{ fontSize: '18px', color: '#666' }}>{t(key)}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            {/* Chat messages */}
+            {chatMessages.length > 0 && (
+              <View style={{ maxHeight: '400px', overflowY: 'auto', marginBottom: '12px' }}>
+                {chatMessages.map(msg => (
+                  <View key={msg.id} style={{
+                    background: msg.role === 'user' ? '#6c5ce7' : '#f5f5f5',
+                    borderRadius: '12px',
+                    padding: '12px 16px',
+                    marginBottom: '8px',
+                    marginLeft: msg.role === 'user' ? '20%' : '0',
+                    marginRight: msg.role === 'assistant' ? '20%' : '0',
+                  }}>
+                    <Text style={{
+                      fontSize: '20px',
+                      color: msg.role === 'user' ? 'white' : '#333',
+                      display: 'block',
+                      whiteSpace: 'pre-wrap',
+                      lineHeight: 1.5,
+                    }}>{msg.content}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Chat input */}
+            <View style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                type='text'
+                placeholder={t('pro.qa.placeholder')}
+                value={chatInput}
+                onChange={(e) => setChatInput((e.target as HTMLInputElement).value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && chatInput && !chatLoading && tslaData) {
+                    const userMsg: ChatMessage = { id: generateMessageId(), role: 'user', content: chatInput, timestamp: Date.now() }
+                    setChatMessages(prev => [...prev, userMsg])
+                    const question = chatInput
+                    setChatInput('')
+                    setChatLoading(true)
+                    askAI(question, tslaData, proEmail || undefined).then(answer => {
+                      const assistantMsg: ChatMessage = { id: generateMessageId(), role: 'assistant', content: answer, timestamp: Date.now() }
+                      setChatMessages(prev => [...prev, assistantMsg])
+                      setChatLoading(false)
+                    })
+                  }
+                }}
+                style={{ flex: 1, padding: '12px 16px', borderRadius: '24px', border: '2px solid #e0e0e0', fontSize: '16px', outline: 'none' }}
+              />
+              <View role='button' tabIndex={0} onClick={async () => {
+                if (!chatInput || chatLoading || !tslaData) return
+                const userMsg: ChatMessage = { id: generateMessageId(), role: 'user', content: chatInput, timestamp: Date.now() }
+                setChatMessages(prev => [...prev, userMsg])
+                const question = chatInput
+                setChatInput('')
+                setChatLoading(true)
+                const answer = await askAI(question, tslaData, proEmail || undefined)
+                const assistantMsg: ChatMessage = { id: generateMessageId(), role: 'assistant', content: answer, timestamp: Date.now() }
+                setChatMessages(prev => [...prev, assistantMsg])
+                setChatLoading(false)
+              }} style={{ background: '#6c5ce7', borderRadius: '50%', width: '44px', height: '44px', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                <Text style={{ fontSize: '20px', color: 'white' }}>{chatLoading ? '...' : '→'}</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Price Alerts */}
+          <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+            <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <Text style={{ fontSize: '28px', fontWeight: 'bold' }}>{t('pro.alerts.title')}</Text>
+              <View role='button' tabIndex={0} onClick={() => setShowAddAlert(!showAddAlert)} style={{ background: '#f0f0f0', borderRadius: '20px', padding: '8px 16px', cursor: 'pointer' }}>
+                <Text style={{ fontSize: '20px', color: '#6c5ce7' }}>{t('pro.alerts.add')}</Text>
+              </View>
+            </View>
+
+            {/* Add alert form */}
+            {showAddAlert && (
+              <View style={{ background: '#f8f9fa', borderRadius: '12px', padding: '16px', marginBottom: '16px' }}>
+                <View style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                  {(['price_above', 'price_below', 'ps_above', 'ps_below'] as AlertType[]).map(type => (
+                    <View key={type} role='button' tabIndex={0} onClick={() => setAlertType(type)} style={{
+                      background: alertType === type ? '#6c5ce7' : 'white',
+                      borderRadius: '8px',
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      border: '1px solid #e0e0e0',
+                    }}>
+                      <Text style={{ fontSize: '18px', color: alertType === type ? 'white' : '#666' }}>
+                        {t(`pro.alerts.${type.replace('_', '.')}`)}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+                <View style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <input
+                    type='number'
+                    placeholder={t('pro.alerts.value')}
+                    value={alertValue}
+                    onChange={(e) => setAlertValue((e.target as HTMLInputElement).value)}
+                    style={{ flex: 1, padding: '10px 14px', borderRadius: '8px', border: '2px solid #e0e0e0', fontSize: '16px', outline: 'none' }}
+                  />
+                  <View role='button' tabIndex={0} onClick={async () => {
+                    if (!alertValue || alertCreating || !proEmail) return
+                    setAlertCreating(true)
+                    const result = await createAlert(proEmail, alertType, parseFloat(alertValue))
+                    if (result) {
+                      setAlerts(prev => [result, ...prev])
+                      setAlertValue('')
+                      setShowAddAlert(false)
+                    }
+                    setAlertCreating(false)
+                  }} style={{ background: '#6c5ce7', borderRadius: '8px', padding: '10px 20px', cursor: 'pointer' }}>
+                    <Text style={{ fontSize: '20px', fontWeight: 'bold', color: 'white' }}>
+                      {alertCreating ? t('pro.alerts.creating') : t('pro.alerts.create')}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {/* Active alerts list */}
+            {alerts.length === 0 ? (
+              <Text style={{ fontSize: '20px', color: '#999', textAlign: 'center', display: 'block', padding: '16px' }}>{t('pro.alerts.empty')}</Text>
+            ) : (
+              <View>
+                {alerts.map(alert => (
+                  <View key={alert.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #f0f0f0' }}>
+                    <View>
+                      <Text style={{ fontSize: '20px', display: 'block', color: '#333' }}>
+                        {t(`pro.alerts.${alert.alert_type.replace('_', '.')}`)}
+                      </Text>
+                      <Text style={{ fontSize: '24px', fontWeight: 'bold', display: 'block', color: '#6c5ce7' }}>
+                        {alert.alert_type.startsWith('price') ? `$${alert.target_value}` : `${alert.target_value}x`}
+                      </Text>
+                    </View>
+                    <View role='button' tabIndex={0} onClick={async () => {
+                      if (proEmail) {
+                        await deleteAlert(proEmail, alert.id)
+                        setAlerts(prev => prev.filter(a => a.id !== alert.id))
+                      }
+                    }} style={{ color: '#c62828', cursor: 'pointer', padding: '8px' }}>
+                      <Text style={{ fontSize: '18px', color: '#c62828' }}>{t('pro.alerts.delete')}</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        </View>
+      )}
+
       {/* Upgrade CTA - only show for free users */}
       {!isPro && (
         <View role='button' tabIndex={0} onClick={() => navigateToView('pricing')} style={{ background: 'linear-gradient(135deg, #00d4aa, #00b894)', borderRadius: '16px', padding: '24px', textAlign: 'center', marginBottom: '16px', cursor: 'pointer' }}>
@@ -229,6 +498,8 @@ function DashboardInline() {
                       const result = await checkSubscriptionByEmail(restoreEmail)
                       if (result.isActive) {
                         setIsPro(true)
+                        setProEmail(restoreEmail)
+                        setProEmailState(restoreEmail)
                         setPaymentMessage(t('dash.payment.success'))
                         setShowRestore(false)
                         setTimeout(() => setPaymentMessage(null), 5000)

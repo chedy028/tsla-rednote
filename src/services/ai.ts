@@ -1,12 +1,8 @@
 /**
- * AI 分析服务 - TSLA 智能估值分析
- * AI Analysis Service - Tesla intelligent valuation analysis
- *
- * 提供两种分析模式:
- * 1. getQuickAnalysis - 本地模板分析，即时响应 (免费/Pro)
- * 2. getDeepAnalysis - AI 深度分析，调用 Supabase Edge Function (仅 Pro)
+ * AI Analysis Service for H5/Web
+ * Provides AI valuation reports, Q&A, and price alerts for Pro users.
+ * Uses email-based auth via Supabase Edge Functions.
  */
-import Taro from '@tarojs/taro'
 import type { TSLAStockData } from './stockApi'
 import type { ValuationTier } from './valuation'
 import {
@@ -14,16 +10,17 @@ import {
   HISTORICAL_PS_DATA,
   analyzeValuation
 } from './valuation'
-import { getSessionToken, getOpenid } from './auth'
+import { getCurrentLang } from './i18n'
 
-// ==================== 类型定义 ====================
+// ==================== Types ====================
 
 export interface AIAnalysisResult {
-  content: string        // 分析正文 (中文)
-  summary: string        // 一句话摘要
-  confidence: 'high' | 'medium' | 'low'  // 分析置信度
-  timestamp: number      // 生成时间戳
-  source: 'ai' | 'template'  // 来源: AI 或模板
+  content: string
+  summary: string
+  confidence: 'high' | 'medium' | 'low'
+  timestamp: number
+  source: 'ai' | 'template'
+  error?: string
 }
 
 export interface ChatMessage {
@@ -33,66 +30,286 @@ export interface ChatMessage {
   timestamp: number
 }
 
-// ==================== 缓存配置 ====================
+export type AlertType = 'price_above' | 'price_below' | 'ps_above' | 'ps_below'
 
-const AI_CACHE_KEY = 'ai_analysis_cache'
-const AI_CACHE_DURATION = 30 * 60 * 1000  // 30分钟缓存
-
-interface AICacheEntry {
-  result: AIAnalysisResult
-  cacheKey: string
-  timestamp: number
+export interface PriceAlert {
+  id: string
+  email: string
+  alert_type: AlertType
+  target_value: number
+  is_active: boolean
+  created_at: string
+  triggered_at: string | null
 }
 
-// Supabase 配置
-const SUPABASE_URL = process.env.TARO_APP_SUPABASE_URL || ''
-const SUPABASE_ANON_KEY = process.env.TARO_APP_SUPABASE_ANON_KEY || ''
-
-// ==================== 缓存管理 ====================
-
-function getCacheKey(stockData: TSLAStockData): string {
-  // 根据价格和P/S比率生成缓存 key，价格变动超过1%视为不同数据
-  const priceKey = Math.round(stockData.price * 10)
-  const psKey = Math.round(stockData.psRatio * 100)
-  return `ai_${priceKey}_${psKey}`
+export interface TriggeredAlert {
+  id: string
+  type: string
+  target: number
+  current: number
 }
 
-function getCachedAnalysis(cacheKey: string): AIAnalysisResult | null {
-  try {
-    const cached = Taro.getStorageSync(AI_CACHE_KEY) as string
-    if (!cached) return null
+// ==================== Config ====================
 
-    const entry: AICacheEntry = JSON.parse(cached)
-    const now = Date.now()
+const SUPABASE_URL = 'https://aiqpmtroekgrzyjcqkbl.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpcXBtdHJvZWtncnp5amNxa2JsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyMjg2MTUsImV4cCI6MjA4MjgwNDYxNX0.Im4Kq8FzBV0ydSSkqcgcMxmP_KWZLL2OONFxeL8ppe8'
 
-    if (entry.cacheKey === cacheKey && now - entry.timestamp < AI_CACHE_DURATION) {
-      return entry.result
-    }
-
-    return null
-  } catch {
-    return null
-  }
+const apiHeaders = {
+  'Content-Type': 'application/json',
+  'apikey': SUPABASE_ANON_KEY,
+  'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
 }
 
-function setCachedAnalysis(cacheKey: string, result: AIAnalysisResult): void {
-  try {
-    const entry: AICacheEntry = {
-      result,
-      cacheKey,
-      timestamp: Date.now()
-    }
-    Taro.setStorageSync(AI_CACHE_KEY, JSON.stringify(entry))
-  } catch {
-    // 缓存写入失败不影响主流程
-  }
-}
+const AI_REPORT_CACHE_KEY = 'tsla_ai_report'
+const AI_CACHE_DURATION = 30 * 60 * 1000 // 30 min
 
-// ==================== 模板分析 (本地) ====================
+// ==================== Pro Email Management ====================
 
 /**
- * 快速本地分析 - 基于模板生成中文分析文本
- * 无需网络请求，根据 P/S 比率和估值等级即时生成
+ * Get the Pro user's email from localStorage.
+ */
+export function getProEmail(): string | null {
+  try {
+    // Check dedicated email storage first
+    const email = localStorage.getItem('tsla_pro_email')
+    if (email) return email
+
+    // Fall back to subscription cache
+    const cached = localStorage.getItem('tsla_subscription')
+    if (cached) {
+      const parsed = JSON.parse(cached)
+      if (parsed.email) return parsed.email
+    }
+  } catch {}
+  return null
+}
+
+/**
+ * Save the Pro user's email.
+ */
+export function setProEmail(email: string): void {
+  try {
+    localStorage.setItem('tsla_pro_email', email)
+  } catch {}
+}
+
+// ==================== AI Analysis (H5) ====================
+
+/**
+ * Convert TSLAStockData to edge function payload.
+ */
+function toStockPayload(data: TSLAStockData) {
+  return {
+    price: data.price,
+    change: data.change,
+    changePercent: data.changePercent,
+    marketCap: data.marketCap,
+    volume: data.volume,
+    psRatio: data.psRatio,
+    revenueTTM: data.revenueTTM,
+    fiftyTwoWeekHigh: data.fiftyTwoWeekHigh,
+    fiftyTwoWeekLow: data.fiftyTwoWeekLow,
+  }
+}
+
+/**
+ * Get AI valuation report from edge function (Pro only).
+ * Falls back to local template if AI is unavailable.
+ */
+export async function getDeepAnalysis(stockData: TSLAStockData, email?: string): Promise<AIAnalysisResult> {
+  // Check cache first
+  const cached = getCachedReport()
+  if (cached) return cached
+
+  const userEmail = email || getProEmail()
+  if (!userEmail) {
+    return getFallbackAnalysis(stockData)
+  }
+
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/ai-analyze-h5`, {
+      method: 'POST',
+      headers: apiHeaders,
+      body: JSON.stringify({
+        email: userEmail,
+        stockData: toStockPayload(stockData),
+        lang: getCurrentLang(),
+      }),
+    })
+
+    const data = await resp.json()
+
+    if (!resp.ok || !data.analysis) {
+      console.warn('AI report failed:', data.error)
+      return getFallbackAnalysis(stockData)
+    }
+
+    const result: AIAnalysisResult = {
+      content: data.analysis,
+      summary: data.analysis.slice(0, 100) + (data.analysis.length > 100 ? '...' : ''),
+      confidence: 'high',
+      timestamp: data.timestamp || Date.now(),
+      source: 'ai',
+    }
+
+    // Cache
+    try {
+      localStorage.setItem(AI_REPORT_CACHE_KEY, JSON.stringify({
+        ...result,
+        cachedAt: Date.now(),
+      }))
+    } catch {}
+
+    return result
+  } catch (err) {
+    console.warn('AI report error:', (err as Error).message)
+    return getFallbackAnalysis(stockData)
+  }
+}
+
+/**
+ * Get cached AI report (30 min TTL).
+ */
+function getCachedReport(): AIAnalysisResult | null {
+  try {
+    const cached = localStorage.getItem(AI_REPORT_CACHE_KEY)
+    if (!cached) return null
+    const parsed = JSON.parse(cached)
+    if (Date.now() - parsed.cachedAt > AI_CACHE_DURATION) return null
+    return {
+      content: parsed.content,
+      summary: parsed.summary,
+      confidence: parsed.confidence,
+      timestamp: parsed.timestamp,
+      source: parsed.source,
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Ask AI a question about TSLA (Q&A, Pro only).
+ */
+export async function askAI(question: string, stockData: TSLAStockData, email?: string): Promise<string> {
+  const userEmail = email || getProEmail()
+
+  // Try local quick answer first for short questions
+  if (question.length < 20) {
+    const quick = getQuickAnswer(question, stockData)
+    if (quick) return quick
+  }
+
+  if (!userEmail) {
+    return getQuickAnswer(question, stockData) || '请先登录 Pro 账户使用 AI 助手功能。'
+  }
+
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/ai-analyze-h5`, {
+      method: 'POST',
+      headers: apiHeaders,
+      body: JSON.stringify({
+        email: userEmail,
+        question,
+        stockData: toStockPayload(stockData),
+        lang: getCurrentLang(),
+      }),
+    })
+
+    const data = await resp.json()
+
+    if (!resp.ok || !data.analysis) {
+      return getQuickAnswer(question, stockData) || data.error || 'AI analysis unavailable.'
+    }
+
+    return data.analysis
+  } catch {
+    return getQuickAnswer(question, stockData) || 'Network error. Please try again.'
+  }
+}
+
+// ==================== Price Alerts ====================
+
+/**
+ * List active alerts for a user.
+ */
+export async function listAlerts(email: string): Promise<PriceAlert[]> {
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/price-alerts`, {
+      method: 'POST',
+      headers: apiHeaders,
+      body: JSON.stringify({ action: 'list', email }),
+    })
+    const data = await resp.json()
+    return Array.isArray(data) ? data : []
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Create a new price alert.
+ */
+export async function createAlert(email: string, type: AlertType, targetValue: number): Promise<PriceAlert | null> {
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/price-alerts`, {
+      method: 'POST',
+      headers: apiHeaders,
+      body: JSON.stringify({
+        action: 'create',
+        email,
+        alert: { type, target_value: targetValue },
+      }),
+    })
+    const data = await resp.json()
+    return Array.isArray(data) ? data[0] : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Delete (deactivate) an alert.
+ */
+export async function deleteAlert(email: string, alertId: string): Promise<void> {
+  try {
+    await fetch(`${SUPABASE_URL}/functions/v1/price-alerts`, {
+      method: 'POST',
+      headers: apiHeaders,
+      body: JSON.stringify({ action: 'delete', email, alert_id: alertId }),
+    })
+  } catch {}
+}
+
+/**
+ * Check if any alerts have been triggered.
+ */
+export async function checkAlerts(
+  email: string,
+  currentPrice: number,
+  currentPs: number
+): Promise<{ triggered: TriggeredAlert[]; total_active: number }> {
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/price-alerts`, {
+      method: 'POST',
+      headers: apiHeaders,
+      body: JSON.stringify({
+        action: 'check',
+        email,
+        current_price: currentPrice,
+        current_ps: currentPs,
+      }),
+    })
+    return await resp.json()
+  } catch {
+    return { triggered: [], total_active: 0 }
+  }
+}
+
+// ==================== Local Template Analysis ====================
+
+/**
+ * Quick local analysis — template-based, no network needed.
  */
 export function getQuickAnalysis(psRatio: number, valuationTier: ValuationTier): AIAnalysisResult {
   const percentile = getHistoricalPercentile(psRatio)
@@ -101,7 +318,6 @@ export function getQuickAnalysis(psRatio: number, valuationTier: ValuationTier):
   const diffFromAvg = ((psRatio - historicalAvg) / historicalAvg * 100).toFixed(1)
   const isAboveAvg = psRatio > historicalAvg
 
-  // 根据估值等级生成不同的分析文本
   const tierAnalysis = getTierAnalysis(valuationTier.tier, psRatio, percentile, avgRounded, diffFromAvg, isAboveAvg)
 
   return {
@@ -127,99 +343,64 @@ function getTierAnalysis(
   switch (tier) {
     case 'BARGAIN':
       return {
-        summary: `TSLA 当前 P/S ${psText}x，处于极度低估区间，历史罕见的买入机会。`,
+        summary: `TSLA P/S ${psText}x — extremely undervalued, rare buying opportunity.`,
         content:
-          `当前 TSLA 市销率为 ${psText}x，处于历史 ${percentileText} 分位，` +
-          `远低于历史均值 ${historicalAvg}x（偏离 ${diffFromAvg}%）。\n\n` +
-          `这一估值水平极为罕见，通常出现在市场极度恐慌或公司遭遇短期利空时。` +
-          `从历史数据来看，在如此低的 P/S 比率买入，中长期获得正收益的概率很高。\n\n` +
-          `建议策略：\n` +
-          `- 可以考虑分批建仓，利用低估值优势\n` +
-          `- 关注公司基本面是否出现实质性恶化\n` +
-          `- 如果基本面未变，这可能是难得的价值投资机会\n` +
-          `- 注意仓位管理，不要 ALL IN\n\n` +
-          `风险提示：低估值不代表不会更低，需结合行业趋势和公司经营状况综合判断。`
+          `TSLA P/S ratio: ${psText}x (${percentileText} percentile)\n` +
+          `Well below historical avg of ${historicalAvg}x (${diffFromAvg}% deviation).\n\n` +
+          `This valuation is extremely rare, typically seen during severe market panic.\n\n` +
+          `Strategy: Consider building positions gradually. Monitor fundamentals for any deterioration.\n\n` +
+          `Risk: Low valuations can go lower. Always manage position sizes.`
       }
-
     case 'CHEAP':
       return {
-        summary: `TSLA 当前 P/S ${psText}x，估值偏低，可考虑逢低布局。`,
+        summary: `TSLA P/S ${psText}x — undervalued, consider accumulating.`,
         content:
-          `当前 TSLA 市销率为 ${psText}x，处于历史 ${percentileText} 分位，` +
-          `低于历史均值 ${historicalAvg}x（偏离 ${diffFromAvg}%）。\n\n` +
-          `这一估值水平表明市场对特斯拉的定价相对保守。在汽车行业转型和 AI 赋能的大背景下，` +
-          `当前价格可能未充分反映公司的成长潜力。\n\n` +
-          `建议策略：\n` +
-          `- 适合开始建仓或加仓，分批买入降低择时风险\n` +
-          `- 关注季度交付量数据和毛利率变化\n` +
-          `- 留意 FSD（全自动驾驶）进展和 Robotaxi 落地时间表\n` +
-          `- 设定好止损位，控制下行风险\n\n` +
-          `风险提示：汽车行业竞争加剧，需关注市场份额变化和利润率走势。`
+          `TSLA P/S ratio: ${psText}x (${percentileText} percentile)\n` +
+          `Below historical avg of ${historicalAvg}x (${diffFromAvg}% deviation).\n\n` +
+          `Market is pricing Tesla conservatively. Growth potential may not be fully reflected.\n\n` +
+          `Strategy: Start building positions. Watch quarterly deliveries and margins.\n\n` +
+          `Risk: EV competition intensifying. Monitor market share trends.`
       }
-
     case 'FAIR':
       return {
-        summary: `TSLA 当前 P/S ${psText}x，估值合理，适合持有观望。`,
+        summary: `TSLA P/S ${psText}x — fair value zone, hold and watch.`,
         content:
-          `当前 TSLA 市销率为 ${psText}x，处于历史 ${percentileText} 分位，` +
-          `${isAboveAvg ? '略高于' : '接近'}历史均值 ${historicalAvg}x（偏离 ${diffFromAvg}%）。\n\n` +
-          `当前估值处于合理区间，市场对特斯拉的定价基本反映了其当前业绩和近期增长预期。` +
-          `这个阶段不宜大举追涨，也不必急于离场。\n\n` +
-          `建议策略：\n` +
-          `- 已持有者可继续持有，等待更明确的方向信号\n` +
-          `- 新建仓者建议小仓位试探，等待回调加仓\n` +
-          `- 重点关注营收增速能否维持或加速\n` +
-          `- 关注能源业务和 AI 业务的边际变化\n\n` +
-          `风险提示：估值合理区间上沿接近偏贵，注意设置止盈计划。`
+          `TSLA P/S ratio: ${psText}x (${percentileText} percentile)\n` +
+          `${isAboveAvg ? 'Slightly above' : 'Near'} historical avg of ${historicalAvg}x (${diffFromAvg}%).\n\n` +
+          `Valuation reflects current performance and near-term growth expectations.\n\n` +
+          `Strategy: Hold existing positions. New entries should wait for pullbacks.\n\n` +
+          `Risk: Fair value can shift. Watch revenue growth acceleration.`
       }
-
     case 'EXPENSIVE':
       return {
-        summary: `TSLA 当前 P/S ${psText}x，估值偏高，追涨需谨慎。`,
+        summary: `TSLA P/S ${psText}x — elevated, caution on new entries.`,
         content:
-          `当前 TSLA 市销率为 ${psText}x，处于历史 ${percentileText} 分位，` +
-          `显著高于历史均值 ${historicalAvg}x（偏离 +${Math.abs(Number(diffFromAvg))}%）。\n\n` +
-          `市场对特斯拉的乐观预期已较充分地反映在股价中。这通常由重大利好催化，` +
-          `比如 FSD 突破、Robotaxi 落地预期或政策利好等。\n\n` +
-          `建议策略：\n` +
-          `- 不建议在此价位大幅加仓，追高风险较大\n` +
-          `- 已持仓者可适当减仓锁定部分利润\n` +
-          `- 等待回调至合理区间再考虑加仓\n` +
-          `- 密切关注催化因素是否兑现\n\n` +
-          `风险提示：高估值状态下，任何低于预期的数据都可能引发较大回调。`
+          `TSLA P/S ratio: ${psText}x (${percentileText} percentile)\n` +
+          `Above historical avg of ${historicalAvg}x (+${Math.abs(Number(diffFromAvg))}% deviation).\n\n` +
+          `Optimistic expectations well priced in. Often driven by FSD/Robotaxi catalysts.\n\n` +
+          `Strategy: Avoid large new positions. Consider partial profit-taking.\n\n` +
+          `Risk: Any miss on expectations could trigger significant pullback.`
       }
-
     case 'OVERPRICED':
       return {
-        summary: `TSLA 当前 P/S ${psText}x，市场过热，需高度警惕风险。`,
+        summary: `TSLA P/S ${psText}x — overheated, high risk zone.`,
         content:
-          `当前 TSLA 市销率为 ${psText}x，处于历史 ${percentileText} 分位，` +
-          `远高于历史均值 ${historicalAvg}x（偏离 +${Math.abs(Number(diffFromAvg))}%）。\n\n` +
-          `当前估值已经明显偏离基本面支撑，市场情绪极度乐观。历史上类似的高估值水平，` +
-          `往往伴随后续较大幅度的回调。这并不意味着股价不能继续上涨，但风险收益比已经不利。\n\n` +
-          `建议策略：\n` +
-          `- 不建议新建仓位，风险收益比不佳\n` +
-          `- 已持仓者建议分批减仓，落袋为安\n` +
-          `- 可关注看跌期权作为对冲工具\n` +
-          `- 耐心等待估值回归合理区间\n\n` +
-          `风险提示：FOMO 是投资大忌，高估值追涨往往是亏损的主要原因。请理性决策。`
+          `TSLA P/S ratio: ${psText}x (${percentileText} percentile)\n` +
+          `Far above historical avg of ${historicalAvg}x (+${Math.abs(Number(diffFromAvg))}% deviation).\n\n` +
+          `Valuation disconnected from fundamentals. Market euphoria detected.\n\n` +
+          `Strategy: Not recommended for new positions. Consider reducing exposure.\n\n` +
+          `Risk: FOMO is dangerous. Historically, these levels precede major corrections.`
       }
-
     default:
       return {
-        summary: `TSLA 当前 P/S ${psText}x，请结合市场环境综合判断。`,
-        content:
-          `当前 TSLA 市销率为 ${psText}x，处于历史 ${percentileText} 分位，` +
-          `历史均值为 ${historicalAvg}x。请结合宏观经济环境、行业趋势和公司基本面综合分析。`
+        summary: `TSLA P/S ${psText}x — evaluate with full market context.`,
+        content: `TSLA P/S ratio: ${psText}x (${percentileText} percentile), historical avg: ${historicalAvg}x.`
       }
   }
 }
 
-// ==================== 预设问题本地回答 ====================
-
 /**
- * 针对预设快速问题生成本地回答
- * 不需要调用 AI API，基于当前数据直接生成
+ * Quick answer for common questions (no network needed).
  */
 export function getQuickAnswer(question: string, stockData: TSLAStockData): string {
   const { psRatio, valuationTier, price, marketCap, revenueTTM } = stockData
@@ -227,357 +408,118 @@ export function getQuickAnswer(question: string, stockData: TSLAStockData): stri
   const historicalAvg = HISTORICAL_PS_DATA.reduce((sum, d) => sum + d.psRatio, 0) / HISTORICAL_PS_DATA.length
   const analysis = analyzeValuation(marketCap, revenueTTM)
 
-  if (question.includes('适合买入') || question.includes('现在买')) {
+  const q = question.toLowerCase()
+
+  if (q.includes('buy') || q.includes('买') || q.includes('适合买入')) {
     return generateBuyAdvice(psRatio, valuationTier, price, percentile)
   }
-
-  if (question.includes('P/S') || question.includes('市销率') || question.includes('比率')) {
+  if (q.includes('p/s') || q.includes('ratio') || q.includes('市销率')) {
     return generatePSExplanation(psRatio, valuationTier, historicalAvg)
   }
-
-  if (question.includes('历史') || question.includes('比较') || question.includes('对比')) {
+  if (q.includes('history') || q.includes('历史') || q.includes('比较')) {
     return generateHistoricalComparison(psRatio, percentile, historicalAvg, analysis)
   }
-
-  if (question.includes('风险') || question.includes('危险')) {
+  if (q.includes('risk') || q.includes('风险')) {
     return generateRiskAnalysis(psRatio, valuationTier, percentile)
   }
-
-  if (question.includes('目标价') || question.includes('目标')) {
+  if (q.includes('target') || q.includes('目标价')) {
     return generateTargetPrice(psRatio, revenueTTM, historicalAvg)
   }
 
-  // 默认返回综合分析
   return getQuickAnalysis(psRatio, valuationTier).content
 }
 
-function generateBuyAdvice(
-  psRatio: number,
-  tier: ValuationTier,
-  price: number,
-  percentile: number
-): string {
+function generateBuyAdvice(psRatio: number, tier: ValuationTier, price: number, percentile: number): string {
   const psText = psRatio.toFixed(2)
+  const signal = tier.tier === 'BARGAIN' || tier.tier === 'CHEAP' ? 'favorable' :
+                 tier.tier === 'FAIR' ? 'neutral' : 'unfavorable'
 
-  switch (tier.tier) {
-    case 'BARGAIN':
-      return (
-        `基于当前估值分析，TSLA 目前处于极度低估区间。\n\n` +
-        `当前价格 $${price.toFixed(2)}，P/S 比率 ${psText}x，` +
-        `处于历史 ${percentile}% 分位，是近年来非常罕见的低估值水平。\n\n` +
-        `从估值角度看，当前是较好的买入时机。建议分 3-4 批建仓，` +
-        `避免一次性投入全部资金。同时关注是否有基本面恶化的迹象。\n\n` +
-        `注意：这不构成投资建议，请根据自身风险承受能力决策。`
-      )
-    case 'CHEAP':
-      return (
-        `当前 TSLA 估值偏低，具有一定的买入价值。\n\n` +
-        `价格 $${price.toFixed(2)}，P/S ${psText}x，历史分位 ${percentile}%。` +
-        `估值低于历史平均水平，从价值角度看有吸引力。\n\n` +
-        `建议可以开始小仓位建仓，如果继续回调则逐步加仓。` +
-        `关注近期财报数据和交付量作为买入确认信号。\n\n` +
-        `注意：这不构成投资建议，请根据自身风险承受能力决策。`
-      )
-    case 'FAIR':
-      return (
-        `当前 TSLA 估值处于合理区间，无明显的买入或卖出信号。\n\n` +
-        `价格 $${price.toFixed(2)}，P/S ${psText}x，历史分位 ${percentile}%。` +
-        `市场定价基本反映了公司当前状况。\n\n` +
-        `建议观望为主，等待估值回到偏低区间再考虑加仓。` +
-        `如果坚持买入，建议控制仓位在总投资组合的 5-10%。\n\n` +
-        `注意：这不构成投资建议，请根据自身风险承受能力决策。`
-      )
-    case 'EXPENSIVE':
-      return (
-        `当前 TSLA 估值偏高，不建议此时追涨买入。\n\n` +
-        `价格 $${price.toFixed(2)}，P/S ${psText}x，历史分位 ${percentile}%。` +
-        `市场已经充分反映了乐观预期，追高风险较大。\n\n` +
-        `建议耐心等待回调，至少等 P/S 回落到 12x 以下再考虑。` +
-        `如果已持有仓位，可以考虑部分止盈。\n\n` +
-        `注意：这不构成投资建议，请根据自身风险承受能力决策。`
-      )
-    case 'OVERPRICED':
-      return (
-        `当前 TSLA 估值已经严重偏高，强烈不建议此时买入。\n\n` +
-        `价格 $${price.toFixed(2)}，P/S ${psText}x，历史分位 ${percentile}%。` +
-        `市场情绪过热，估值远超基本面支撑。\n\n` +
-        `从历史数据看，在高估值区间买入大概率会经历较大回撤。` +
-        `建议耐心等待，好的投资机会需要好的价格。\n\n` +
-        `注意：这不构成投资建议，请根据自身风险承受能力决策。`
-      )
-    default:
-      return `当前 P/S 比率 ${psText}x，请结合自身情况和市场环境综合判断。`
-  }
-}
-
-function generatePSExplanation(
-  psRatio: number,
-  tier: ValuationTier,
-  historicalAvg: number
-): string {
   return (
-    `P/S 比率（市销率）是什么？\n\n` +
-    `P/S = 市值 / 年营收，它反映市场愿意为公司每 1 美元营收支付多少。\n\n` +
-    `TSLA 当前 P/S 比率：${psRatio.toFixed(2)}x\n` +
-    `历史平均 P/S：${historicalAvg.toFixed(2)}x\n` +
-    `当前估值等级：${tier.textCn}\n\n` +
-    `为什么用 P/S 而不是 P/E？\n` +
-    `- 特斯拉的利润波动较大，P/E（市盈率）容易失真\n` +
-    `- 营收更稳定，能更好反映公司规模和成长性\n` +
-    `- P/S 是成长股估值的常用指标\n\n` +
-    `TSLA 的 P/S 估值区间参考：\n` +
-    `- 低于 5x：极度低估（超值区间）\n` +
-    `- 5-8x：偏低（价值区间）\n` +
-    `- 8-12x：合理（中性区间）\n` +
-    `- 12-20x：偏高（谨慎区间）\n` +
-    `- 20x 以上：高估（风险区间）`
+    `Buy signal: ${signal.toUpperCase()}\n\n` +
+    `Price: $${price.toFixed(2)} | P/S: ${psText}x | Percentile: ${percentile}%\n\n` +
+    `${signal === 'favorable' ? 'Current valuation suggests a reasonable entry point. Consider gradual position building.' :
+      signal === 'neutral' ? 'Valuation is fair. Wait for pullbacks or maintain existing positions.' :
+      'Valuation is elevated. Not recommended for new entries at this level.'}\n\n` +
+    `⚠️ Not investment advice. Do your own research.`
   )
 }
 
-function generateHistoricalComparison(
-  psRatio: number,
-  percentile: number,
-  historicalAvg: number,
-  analysis: { isAboveAvg: boolean }
-): string {
-  const recentData = HISTORICAL_PS_DATA.slice(-4)
-  const quarterText = recentData
-    .map(d => `${d.date}: P/S ${d.psRatio}x (股价 $${d.price})`)
-    .join('\n')
+function generatePSExplanation(psRatio: number, tier: ValuationTier, historicalAvg: number): string {
+  return (
+    `P/S (Price-to-Sales) Ratio Explained\n\n` +
+    `P/S = Market Cap ÷ Annual Revenue\n\n` +
+    `Current TSLA P/S: ${psRatio.toFixed(2)}x\n` +
+    `Historical Average: ${historicalAvg.toFixed(2)}x\n` +
+    `Status: ${tier.textEn}\n\n` +
+    `Why P/S over P/E for Tesla?\n` +
+    `• Tesla's profits fluctuate — P/E can be misleading\n` +
+    `• Revenue is more stable and reflects scale/growth\n` +
+    `• P/S is standard for growth stocks`
+  )
+}
 
+function generateHistoricalComparison(psRatio: number, percentile: number, historicalAvg: number, analysis: { isAboveAvg: boolean }): string {
+  const recentData = HISTORICAL_PS_DATA.slice(-4)
+  const quarterText = recentData.map(d => `${d.date}: P/S ${d.psRatio}x ($${d.price})`).join('\n')
   const maxPS = Math.max(...HISTORICAL_PS_DATA.map(d => d.psRatio))
   const minPS = Math.min(...HISTORICAL_PS_DATA.map(d => d.psRatio))
-  const maxEntry = HISTORICAL_PS_DATA.find(d => d.psRatio === maxPS)
-  const minEntry = HISTORICAL_PS_DATA.find(d => d.psRatio === minPS)
 
   return (
-    `TSLA 历史 P/S 比率对比分析\n\n` +
-    `当前 P/S：${psRatio.toFixed(2)}x\n` +
-    `历史均值：${historicalAvg.toFixed(2)}x\n` +
-    `历史分位：${percentile}%（即 ${percentile}% 的历史数据低于当前值）\n` +
-    `当前 ${analysis.isAboveAvg ? '高于' : '低于'}历史均值\n\n` +
-    `历史极值：\n` +
-    `- 最高 P/S：${maxPS}x（${maxEntry?.date}，股价 $${maxEntry?.price}）\n` +
-    `- 最低 P/S：${minPS}x（${minEntry?.date}，股价 $${minEntry?.price}）\n\n` +
-    `近 4 个季度数据：\n${quarterText}\n\n` +
-    `总结：当前估值在历史参照中处于 ${percentile < 30 ? '较低' : percentile < 70 ? '中等' : '较高'}位置，` +
-    `${percentile < 30 ? '有较好的安全边际' : percentile < 70 ? '估值基本合理' : '需要注意回调风险'}。`
+    `TSLA Historical P/S Comparison\n\n` +
+    `Current: ${psRatio.toFixed(2)}x | Avg: ${historicalAvg.toFixed(2)}x | Percentile: ${percentile}%\n` +
+    `${analysis.isAboveAvg ? 'Above' : 'Below'} historical average\n\n` +
+    `Range: ${minPS}x — ${maxPS}x\n\n` +
+    `Recent quarters:\n${quarterText}`
   )
 }
 
-function generateRiskAnalysis(
-  psRatio: number,
-  tier: ValuationTier,
-  percentile: number
-): string {
-  const riskLevel = percentile > 80 ? '高' : percentile > 50 ? '中等' : '较低'
-
+function generateRiskAnalysis(psRatio: number, tier: ValuationTier, percentile: number): string {
+  const riskLevel = percentile > 80 ? 'HIGH' : percentile > 50 ? 'MEDIUM' : 'LOW'
   return (
-    `TSLA 当前风险评估\n\n` +
-    `综合风险等级：${riskLevel}\n` +
-    `P/S 比率：${psRatio.toFixed(2)}x（${tier.textCn}）\n` +
-    `估值分位：${percentile}%\n\n` +
-    `主要风险因素：\n` +
-    `1. 估值风险：${percentile > 70 ? '当前估值偏高，有回调压力' : percentile > 40 ? '估值合理，风险可控' : '估值偏低，下行空间有限'}\n` +
-    `2. 竞争风险：全球电动车市场竞争加剧，中国市场尤其激烈\n` +
-    `3. 政策风险：补贴政策变化、关税和贸易摩擦\n` +
-    `4. 技术风险：FSD 自动驾驶技术落地进度不确定\n` +
-    `5. 宏观风险：利率环境和经济周期对成长股影响较大\n\n` +
-    `利好因素：\n` +
-    `1. AI 和自动驾驶领域的技术领先优势\n` +
-    `2. 能源业务（储能、太阳能）快速增长\n` +
-    `3. Robotaxi 和 Optimus 机器人的长期想象空间\n` +
-    `4. 全球产能持续扩张\n\n` +
-    `注意：投资有风险，以上分析仅供参考。`
+    `Risk Assessment: ${riskLevel}\n\n` +
+    `P/S: ${psRatio.toFixed(2)}x | Percentile: ${percentile}%\n\n` +
+    `Key risks:\n` +
+    `• Valuation: ${percentile > 70 ? 'Elevated, pullback likely' : percentile > 40 ? 'Fair, manageable' : 'Low, limited downside'}\n` +
+    `• Competition: Global EV market increasingly crowded\n` +
+    `• Policy: Subsidy changes, tariffs, trade tensions\n` +
+    `• Tech: FSD timeline uncertainty\n\n` +
+    `Catalysts:\n` +
+    `• AI/FSD technology leadership\n` +
+    `• Energy business growth\n` +
+    `• Robotaxi & Optimus long-term potential\n\n` +
+    `⚠️ For reference only. Not investment advice.`
   )
 }
 
-function generateTargetPrice(
-  psRatio: number,
-  revenueTTM: number,
-  historicalAvg: number
-): string {
-  const sharesOutstanding = 3_210_000_000  // 约32.1亿股
-  const fairPS = historicalAvg
-  const cheapPS = 7
-  const expensivePS = 15
-
-  const fairPrice = (fairPS * revenueTTM / sharesOutstanding).toFixed(0)
-  const cheapPrice = (cheapPS * revenueTTM / sharesOutstanding).toFixed(0)
-  const expensivePrice = (expensivePS * revenueTTM / sharesOutstanding).toFixed(0)
+function generateTargetPrice(psRatio: number, revenueTTM: number, historicalAvg: number): string {
+  const shares = 3_210_000_000
+  const fairPrice = (historicalAvg * revenueTTM / shares).toFixed(0)
+  const cheapPrice = (7 * revenueTTM / shares).toFixed(0)
+  const expensivePrice = (15 * revenueTTM / shares).toFixed(0)
 
   return (
-    `TSLA 估值参考价格区间\n\n` +
-    `基于当前 TTM 营收和 P/S 比率的参考价格：\n\n` +
-    `- 低估价位（P/S 7x）：约 $${cheapPrice}\n` +
-    `- 合理价位（P/S ${fairPS.toFixed(1)}x）：约 $${fairPrice}\n` +
-    `- 偏高价位（P/S 15x）：约 $${expensivePrice}\n\n` +
-    `当前 P/S：${psRatio.toFixed(2)}x\n\n` +
-    `注意：\n` +
-    `- 以上价格基于当前营收水平，未考虑未来增长\n` +
-    `- 如果营收增速超预期，合理估值中枢会上移\n` +
-    `- 这些是参考区间而非精确目标价\n` +
-    `- 不构成任何投资建议，请综合多维度分析`
+    `TSLA Reference Price Zones (based on current TTM revenue)\n\n` +
+    `• Undervalued (P/S 7x): ~$${cheapPrice}\n` +
+    `• Fair value (P/S ${historicalAvg.toFixed(1)}x): ~$${fairPrice}\n` +
+    `• Overvalued (P/S 15x): ~$${expensivePrice}\n\n` +
+    `Current P/S: ${psRatio.toFixed(2)}x\n\n` +
+    `Note: Based on current revenue. Future growth will shift these zones upward.\n` +
+    `⚠️ Not investment advice.`
   )
 }
 
-// ==================== AI 深度分析 (Pro) ====================
-
 /**
- * AI 深度分析 - 调用 Supabase Edge Function
- * 仅限 Pro 用户使用
- * 包含 30 分钟缓存和模板降级机制
- */
-export async function getDeepAnalysis(stockData: TSLAStockData): Promise<AIAnalysisResult> {
-  const cacheKey = getCacheKey(stockData)
-
-  // 检查缓存
-  const cached = getCachedAnalysis(cacheKey)
-  if (cached) {
-    return cached
-  }
-
-  // 调用 AI 分析 Edge Function
-  try {
-    const token = getSessionToken()
-    const analysis = analyzeValuation(stockData.marketCap, stockData.revenueTTM)
-
-    const openid = getOpenid()
-    if (!openid) {
-      console.warn('AI 分析缺少 openid，降级到模板分析')
-      return getFallbackAnalysis(stockData)
-    }
-
-    const res = await Taro.request<{
-      analysis: string
-      timestamp: number
-    }>({
-      url: `${SUPABASE_URL}/functions/v1/ai-analyze`,
-      method: 'POST',
-      header: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${token || SUPABASE_ANON_KEY}`
-      },
-      data: {
-        openid,
-        stockData: {
-          symbol: 'TSLA',
-          currentPrice: stockData.price,
-          marketCap: stockData.marketCap,
-          volume: stockData.volume,
-          high52w: stockData.fiftyTwoWeekHigh,
-          low52w: stockData.fiftyTwoWeekLow,
-          psRatio: stockData.psRatio,
-          revenueTTM: stockData.revenueTTM,
-          change: stockData.change,
-          changePercent: stockData.changePercent,
-          valuationTier: stockData.valuationTier.tier,
-          percentile: analysis.percentile,
-          historicalAvg: analysis.historicalAvg
-        }
-      },
-      timeout: 30000  // AI 分析允许较长超时
-    })
-
-    if (res.statusCode >= 200 && res.statusCode < 300 && res.data?.analysis) {
-      const result: AIAnalysisResult = {
-        content: res.data.analysis,
-        summary: res.data.analysis.slice(0, 100) + (res.data.analysis.length > 100 ? '...' : ''),
-        confidence: 'high',
-        timestamp: Date.now(),
-        source: 'ai'
-      }
-
-      setCachedAnalysis(cacheKey, result)
-      return result
-    }
-
-    // API 返回错误，降级到模板分析
-    console.warn('AI 分析 API 返回异常，降级到模板分析')
-    return getFallbackAnalysis(stockData)
-  } catch (err) {
-    console.warn('AI 分析请求失败，降级到模板分析:', (err as Error).message)
-    return getFallbackAnalysis(stockData)
-  }
-}
-
-/**
- * AI 对话分析 - 用户自定义问题
- * 调用 AI Edge Function 处理自由问题
- */
-export async function askAI(
-  question: string,
-  stockData: TSLAStockData
-): Promise<string> {
-  // 先尝试匹配预设问题（无需网络请求）
-  const quickAnswer = getQuickAnswer(question, stockData)
-  if (quickAnswer && question.length < 20) {
-    return quickAnswer
-  }
-
-  // 调用 AI Edge Function
-  try {
-    const token = getSessionToken()
-    const analysis = analyzeValuation(stockData.marketCap, stockData.revenueTTM)
-
-    const openid = getOpenid()
-    if (!openid) {
-      return quickAnswer
-    }
-
-    const res = await Taro.request<{ analysis: string; timestamp: number }>({
-      url: `${SUPABASE_URL}/functions/v1/ai-analyze`,
-      method: 'POST',
-      header: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${token || SUPABASE_ANON_KEY}`
-      },
-      data: {
-        openid,
-        question,
-        stockData: {
-          symbol: 'TSLA',
-          currentPrice: stockData.price,
-          marketCap: stockData.marketCap,
-          volume: stockData.volume,
-          high52w: stockData.fiftyTwoWeekHigh,
-          low52w: stockData.fiftyTwoWeekLow,
-          psRatio: stockData.psRatio,
-          valuationTier: stockData.valuationTier.tier,
-          percentile: analysis.percentile,
-          historicalAvg: analysis.historicalAvg
-        }
-      },
-      timeout: 30000
-    })
-
-    if (res.statusCode >= 200 && res.statusCode < 300 && res.data?.analysis) {
-      return res.data.analysis
-    }
-
-    // 降级到本地回答
-    return quickAnswer
-  } catch {
-    return quickAnswer
-  }
-}
-
-/**
- * 降级分析 - AI 不可用时使用增强版模板
+ * Fallback analysis when AI is unavailable.
  */
 function getFallbackAnalysis(stockData: TSLAStockData): AIAnalysisResult {
   const result = getQuickAnalysis(stockData.psRatio, stockData.valuationTier)
 
-  // 增强模板内容，加入更多数据点
   const extra =
-    `\n\n补充数据：\n` +
-    `- 当前股价：$${stockData.price.toFixed(2)}\n` +
-    `- 日涨跌：${stockData.change > 0 ? '+' : ''}${stockData.change.toFixed(2)}（${stockData.change > 0 ? '+' : ''}${stockData.changePercent.toFixed(2)}%）\n` +
-    `- 52周区间：$${stockData.fiftyTwoWeekLow.toFixed(0)} - $${stockData.fiftyTwoWeekHigh.toFixed(0)}\n` +
-    `- 市值：$${(stockData.marketCap / 1e9).toFixed(0)}B\n` +
-    `- 成交量：${(stockData.volume / 1e6).toFixed(1)}M`
+    `\n\nData snapshot:\n` +
+    `• Price: $${stockData.price.toFixed(2)} (${stockData.change > 0 ? '+' : ''}${stockData.changePercent.toFixed(2)}%)\n` +
+    `• 52W Range: $${stockData.fiftyTwoWeekLow.toFixed(0)} - $${stockData.fiftyTwoWeekHigh.toFixed(0)}\n` +
+    `• Market Cap: $${(stockData.marketCap / 1e9).toFixed(0)}B\n` +
+    `• Volume: ${(stockData.volume / 1e6).toFixed(1)}M`
 
   return {
     ...result,
@@ -586,22 +528,14 @@ function getFallbackAnalysis(stockData: TSLAStockData): AIAnalysisResult {
   }
 }
 
-// ==================== 工具函数 ====================
+// ==================== Utilities ====================
 
-/**
- * 生成唯一消息 ID
- */
 export function generateMessageId(): string {
   return `msg_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
 }
 
-/**
- * 清除 AI 分析缓存
- */
 export function clearAICache(): void {
   try {
-    Taro.removeStorageSync(AI_CACHE_KEY)
-  } catch {
-    // 忽略
-  }
+    localStorage.removeItem(AI_REPORT_CACHE_KEY)
+  } catch {}
 }
