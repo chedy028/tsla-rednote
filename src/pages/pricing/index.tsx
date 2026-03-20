@@ -117,7 +117,7 @@ export default function Pricing() {
             </View>
             <View className='feature-item'>
               <Text className='feature-icon'>✅</Text>
-              <Text className='feature-text'>智能买卖信号提示</Text>
+              <Text className='feature-text'>估值状态分析</Text>
             </View>
             <View className='feature-item'>
               <Text className='feature-icon'>✅</Text>
@@ -153,7 +153,7 @@ export default function Pricing() {
 
           <View className='card-header'>
             <Text className='plan-name'>Pro 版</Text>
-            <Text className='plan-scope'>TSLA + 中国新能源</Text>
+            <Text className='plan-scope'>TSLA 深度版</Text>
           </View>
 
           <View className='price-display'>
@@ -177,23 +177,19 @@ export default function Pricing() {
             </View>
             <View className='feature-item highlight'>
               <Text className='feature-icon'>⭐</Text>
-              <Text className='feature-text'>蔚来 (NIO) 估值追踪</Text>
+              <Text className='feature-text'>AI 深度估值报告</Text>
             </View>
             <View className='feature-item highlight'>
               <Text className='feature-icon'>⭐</Text>
-              <Text className='feature-text'>比亚迪 (BYD) 估值追踪</Text>
+              <Text className='feature-text'>AI 智能问答助手</Text>
             </View>
             <View className='feature-item highlight'>
               <Text className='feature-icon'>⭐</Text>
-              <Text className='feature-text'>理想汽车 (Li Auto) 估值追踪</Text>
+              <Text className='feature-text'>价格预警通知</Text>
             </View>
             <View className='feature-item highlight'>
               <Text className='feature-icon'>⭐</Text>
-              <Text className='feature-text'>多股对比分析</Text>
-            </View>
-            <View className='feature-item highlight'>
-              <Text className='feature-icon'>⭐</Text>
-              <Text className='feature-text'>高级 AI 深度报告</Text>
+              <Text className='feature-text'>无广告纯净体验</Text>
             </View>
           </View>
 
@@ -216,27 +212,24 @@ export default function Pricing() {
         </View>
       )}
 
-      {/* Social Proof */}
+      {/* Feature Highlights */}
       <View className='social-proof'>
-        <Text className='proof-title'>已有 10,000+ 投资者订阅</Text>
+        <Text className='proof-title'>核心功能亮点</Text>
         <View className='testimonials'>
           <View className='testimonial'>
             <Text className='testimonial-text'>
-              "从免费版升级到Pro，能同时看NIO和TSLA的估值对比，发现了很多投资机会！"
+              📊 基于市销率 (P/S) 的量化估值模型，数据透明可追溯
             </Text>
-            <Text className='testimonial-author'>- 小红书用户 @新能源车迷</Text>
           </View>
           <View className='testimonial'>
             <Text className='testimonial-text'>
-              "一年49块，平均每天一毛多，这个AI分析师太值了"
+              🤖 AI 辅助分析，帮助理解估值指标背后的含义
             </Text>
-            <Text className='testimonial-author'>- 小红书用户 @价值投资者</Text>
           </View>
           <View className='testimonial'>
             <Text className='testimonial-text'>
-              "P/S 比率这个指标真的很有用，比看新闻靠谱多了"
+              ⏱️ 数据定时更新，随时掌握最新估值水平
             </Text>
-            <Text className='testimonial-author'>- 小红书用户 @投资小白</Text>
           </View>
         </View>
       </View>
@@ -293,7 +286,7 @@ export default function Pricing() {
         <View className='faq-item'>
           <Text className='faq-question'>Q: 基础版和 Pro 版有什么区别？</Text>
           <Text className='faq-answer'>
-            A: 基础版覆盖 TSLA 一只股票的完整估值分析。Pro 版额外支持蔚来、比亚迪、理想汽车三只中国新能源股，并提供多股对比和深度 AI 报告。
+            A: 基础版提供 TSLA 核心估值数据与历史走势。Pro 版额外解锁 AI 深度分析报告、智能问答助手、价格预警通知和无广告体验。
           </Text>
         </View>
 

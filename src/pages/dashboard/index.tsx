@@ -9,75 +9,57 @@ import { navigateToView } from '../../services/navigation'
 import CustomTabBar from '../../components/CustomTabBar'
 import './index.scss'
 
-// ==================== 买卖信号分析 ====================
+// ==================== 估值状态分析 ====================
 
-interface BuySellSignal {
-  signal: 'buy' | 'hold' | 'sell'
+interface ValuationStatus {
+  status: 'undervalued' | 'fairvalue' | 'overvalued'
   emoji: string
   label: string
   color: string
   reasons: string[]
 }
 
-function getBuySellSignal(psRatio: number): BuySellSignal {
+function getValuationStatus(psRatio: number): ValuationStatus {
   const percentile = getHistoricalPercentile(psRatio)
   const historicalAvg = HISTORICAL_PS_DATA.reduce((sum, d) => sum + d.psRatio, 0) / HISTORICAL_PS_DATA.length
 
-  if (psRatio < 6) {
-    return {
-      signal: 'buy',
-      emoji: '\uD83D\uDFE2',
-      label: '买入信号',
-      color: '#2e7d32',
-      reasons: [
-        `P/S 比率 ${psRatio.toFixed(2)}x 低于 6x，处于历史低位`,
-        `当前估值处于历史 ${percentile}% 分位，属于价值区间`,
-        `远低于历史均值 ${historicalAvg.toFixed(1)}x，存在较大上涨空间`,
-        '建议：可分批建仓，逢低加仓'
-      ]
-    }
-  }
-
   if (psRatio < 8) {
     return {
-      signal: 'buy',
+      status: 'undervalued',
       emoji: '\uD83D\uDFE2',
-      label: '买入信号',
+      label: '估值偏低',
       color: '#2e7d32',
       reasons: [
-        `P/S 比率 ${psRatio.toFixed(2)}x，估值偏低`,
-        `低于历史均值 ${historicalAvg.toFixed(1)}x`,
-        `历史分位 ${percentile}%，具有投资吸引力`,
-        '建议：适合逐步建仓'
+        `P/S 比率 ${psRatio.toFixed(2)}x，低于历史均值 ${historicalAvg.toFixed(1)}x`,
+        `当前估值处于历史 ${percentile}% 分位`,
+        '相对历史水平，当前市销率处于较低区间'
       ]
     }
   }
 
   if (psRatio < 13) {
     return {
-      signal: 'hold',
+      status: 'fairvalue',
       emoji: '\uD83D\uDFE1',
-      label: '持有观望',
+      label: '估值合理',
       color: '#f57f17',
       reasons: [
-        `P/S 比率 ${psRatio.toFixed(2)}x，估值处于合理区间`,
-        `接近历史均值 ${historicalAvg.toFixed(1)}x`,
-        `历史分位 ${percentile}%，不高不低`,
-        '建议：已持仓者继续持有，空仓者等待回调'
+        `P/S 比率 ${psRatio.toFixed(2)}x，接近历史均值 ${historicalAvg.toFixed(1)}x`,
+        `历史分位 ${percentile}%，处于中间水平`,
+        '当前市销率处于历史合理区间'
       ]
     }
   }
 
   return {
-    signal: 'sell',
+    status: 'overvalued',
     emoji: '\uD83D\uDD34',
-    label: '卖出信号',
+    label: '估值偏高',
     color: '#c62828',
     reasons: [
-      `P/S 比率 ${psRatio.toFixed(2)}x，估值偏高`,
-      `高于历史均值 ${historicalAvg.toFixed(1)}x`,
-      `历史分位 ${percentile}%，市场情绪过热`,
-      '建议：考虑分批减仓锁定收益'
+      `P/S 比率 ${psRatio.toFixed(2)}x，高于历史均值 ${historicalAvg.toFixed(1)}x`,
+      `历史分位 ${percentile}%，处于较高水平`,
+      '当前市销率高于历史多数时期'
     ]
   }
 }
@@ -221,6 +203,20 @@ export default function Dashboard() {
         </View>
       </View>
 
+      {/* Fallback data warning banner */}
+      {tslaData.isFallback && (
+        <View className='fallback-banner'>
+          <Text className='fallback-banner-icon'>&#9888;&#65039;</Text>
+          <View className='fallback-banner-content'>
+            <Text className='fallback-banner-title'>数据可能不准确</Text>
+            <Text className='fallback-banner-desc'>
+              无法连接实时数据源，当前显示为演示数据，仅供参考。
+              {tslaData.revenueLastUpdated ? ` 营收数据来源: ${tslaData.revenueLastUpdated}` : ''}
+            </Text>
+          </View>
+        </View>
+      )}
+
       {/* Price Card - FREE for all users */}
       <View className='price-card'>
         <View className='price-main'>
@@ -234,7 +230,9 @@ export default function Dashboard() {
             </Text>
           </View>
         </View>
-        <Text className='update-time'>{updateTimeText}</Text>
+        <Text className='update-time'>
+          {tslaData.isFallback ? '演示数据 - 非实时' : updateTimeText}
+        </Text>
       </View>
 
       {/* Valuation Card - P/S ratio and tier are FREE for everyone */}
@@ -282,20 +280,20 @@ export default function Dashboard() {
         </View>
       </View>
 
-      {/* Buy/Sell Signal - FREE for all users */}
+      {/* Valuation Status - FREE for all users */}
       {(() => {
-        const signal = getBuySellSignal(tslaData.psRatio)
+        const vstatus = getValuationStatus(tslaData.psRatio)
         return (
           <View className='signal-card'>
             <View className='signal-header'>
-              <Text className='signal-title'>买卖信号</Text>
+              <Text className='signal-title'>估值状态</Text>
             </View>
-            <View className='signal-badge' style={{ backgroundColor: signal.color + '15', borderColor: signal.color }}>
-              <Text className='signal-emoji'>{signal.emoji}</Text>
-              <Text className='signal-label' style={{ color: signal.color }}>{signal.label}</Text>
+            <View className='signal-badge' style={{ backgroundColor: vstatus.color + '15', borderColor: vstatus.color }}>
+              <Text className='signal-emoji'>{vstatus.emoji}</Text>
+              <Text className='signal-label' style={{ color: vstatus.color }}>{vstatus.label}</Text>
             </View>
             <View className='signal-reasons'>
-              {signal.reasons.map((reason, idx) => (
+              {vstatus.reasons.map((reason, idx) => (
                 <View className='signal-reason-item' key={`reason-${idx}`}>
                   <Text className='signal-reason-bullet'>•</Text>
                   <Text className='signal-reason-text'>{reason}</Text>
@@ -304,7 +302,7 @@ export default function Dashboard() {
             </View>
             <View className='signal-disclaimer'>
               <Text className='signal-disclaimer-text'>
-                以上信号基于 P/S 比率分析，仅供参考
+                以上分析基于 P/S 比率历史数据，仅反映估值水平，不构成任何投资建议
               </Text>
             </View>
           </View>
@@ -332,18 +330,9 @@ export default function Dashboard() {
             </View>
           </View>
 
-          <View className='upgrade-card'>
-            <Text className='upgrade-icon'>🔔</Text>
-            <Text className='upgrade-title'>价格预警通知</Text>
-            <Text className='upgrade-desc'>设置目标价格，当 TSLA 触及时第一时间通知你</Text>
-            <View className='upgrade-button' onClick={handleUpgrade}>
-              <Text className='upgrade-button-text'>升级开启预警</Text>
-            </View>
-          </View>
-
           <View className='upgrade-cta' onClick={handleUpgrade}>
             <Text className='upgrade-cta-text'>低至 ¥4.08/月 解锁全部功能</Text>
-            <Text className='upgrade-cta-sub'>按年付费省17% · 每天只要1毛6</Text>
+            <Text className='upgrade-cta-sub'>按年付费省17% · 每天只要1毛3</Text>
           </View>
         </View>
       ) : (
@@ -428,13 +417,6 @@ export default function Dashboard() {
             </View>
           </View>
 
-          <View className='pro-section'>
-            <Text className='pro-section-title'>🔔 价格预警</Text>
-            <View className='alert-placeholder'>
-              <Text className='alert-placeholder-text'>暂无设置预警，点击添加</Text>
-            </View>
-          </View>
-
           <View className='stats-grid'>
             <View className='stat-item'>
               <Text className='stat-label'>成交量</Text>
@@ -472,7 +454,10 @@ export default function Dashboard() {
       {/* Disclaimer */}
       <View className='disclaimer'>
         <Text className='disclaimer-text'>
-          ⚠️ 本工具仅供学习参考，不构成投资建议。投资有风险，决策需谨慎。
+          ⚠️ 本工具仅供参考，不构成投资建议。投资有风险，入市需谨慎。
+        </Text>
+        <Text className='disclaimer-text' style={{ marginTop: '8px', fontSize: '20px' }}>
+          本页面展示的估值状态基于历史市销率数据的统计分析，不代表对未来股价走势的预测，亦不构成买入、卖出或持有的建议。请结合自身情况独立判断。
         </Text>
       </View>
 

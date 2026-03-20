@@ -2,10 +2,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-interface VerifySubscriptionRequest {
-  openid: string;
-}
-
 interface VerifySubscriptionResponse {
   is_active: boolean;
   expires_at: string | null;
@@ -32,6 +28,76 @@ const corsHeaders: Record<string, string> = {
     "Content-Type, Authorization, x-client-info, apikey",
 };
 
+// ─── Auth Helper ─────────────────────────────────────────────────────────────
+
+function base64UrlDecode(str: string): Uint8Array {
+  const padded = str.replace(/-/g, "+").replace(/_/g, "/");
+  const binary = atob(padded);
+  return Uint8Array.from(binary, (c) => c.charCodeAt(0));
+}
+
+/**
+ * Verify JWT signature (HS256) and return the authenticated openid.
+ */
+async function verifyJwtAndGetOpenid(
+  req: Request,
+): Promise<{ openid: string } | { error: string; status: number }> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return { error: "Missing or invalid Authorization header", status: 401 };
+  }
+
+  const token = authHeader.slice(7);
+  const parts = token.split(".");
+  if (parts.length !== 3) {
+    return { error: "Malformed JWT", status: 401 };
+  }
+
+  const [headerB64, payloadB64, signatureB64] = parts;
+
+  const jwtSecret =
+    Deno.env.get("JWT_SECRET") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(jwtSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["verify"],
+  );
+
+  const data = encoder.encode(`${headerB64}.${payloadB64}`);
+  const signature = base64UrlDecode(signatureB64);
+
+  const valid = await crypto.subtle.verify("HMAC", key, signature, data);
+  if (!valid) {
+    return { error: "Invalid JWT signature", status: 401 };
+  }
+
+  let payload: Record<string, unknown>;
+  try {
+    payload = JSON.parse(
+      new TextDecoder().decode(base64UrlDecode(payloadB64)),
+    );
+  } catch {
+    return { error: "Malformed JWT payload", status: 401 };
+  }
+
+  if (
+    typeof payload.exp === "number" &&
+    payload.exp < Math.floor(Date.now() / 1000)
+  ) {
+    return { error: "JWT has expired", status: 401 };
+  }
+
+  const openid = payload.sub;
+  if (!openid || typeof openid !== "string") {
+    return { error: "JWT missing 'sub' claim", status: 401 };
+  }
+
+  return { openid };
+}
+
 // ─── Main Handler ────────────────────────────────────────────────────────────
 
 Deno.serve(async (req: Request): Promise<Response> => {
@@ -48,17 +114,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   try {
-    const body: VerifySubscriptionRequest = await req.json();
-    const { openid } = body;
-
-    // ── Validate inputs ──────────────────────────────────────────────────
-
-    if (!openid || typeof openid !== "string") {
+    // ── Verify JWT and extract authenticated user identity ───────────────
+    const authResult = await verifyJwtAndGetOpenid(req);
+    if ("error" in authResult) {
       return new Response(
-        JSON.stringify({ error: "Missing or invalid 'openid'" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: authResult.error }),
+        { status: authResult.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+    const openid = authResult.openid;
 
     // ── Query profile ────────────────────────────────────────────────────
 

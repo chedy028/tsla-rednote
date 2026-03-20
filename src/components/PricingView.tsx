@@ -14,7 +14,7 @@ export default function PricingView() {
         <Text style={{ fontSize: '22px', color: '#666', display: 'block' }}>按年付 ¥49/年 · 每天只要1毛3</Text>
         <View style={{ marginTop: '16px' }}>
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ 实时 P/S 估值</Text>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ 买卖信号分析</Text>
+          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ 估值状态分析</Text>
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ 90天历史走势图</Text>
         </View>
       </View>
@@ -26,9 +26,10 @@ export default function PricingView() {
         <Text style={{ fontSize: '22px', color: '#666', display: 'block' }}>按年付 ¥99/年 · 每天只要2毛7</Text>
         <View style={{ marginTop: '16px' }}>
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ 全部基础版功能</Text>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ AI 智能分析助手</Text>
+          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ AI 深度估值报告</Text>
+          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ AI 智能问答助手</Text>
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ 价格预警通知</Text>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ 多股票分析</Text>
+          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ 无广告纯净体验</Text>
         </View>
       </View>
 

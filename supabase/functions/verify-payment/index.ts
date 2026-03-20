@@ -4,7 +4,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 interface VerifyPaymentRequest {
   order_id: string;
-  openid: string;
 }
 
 interface VerifyPaymentResponse {
@@ -25,6 +24,7 @@ interface OrderRecord {
   billing_period: string;
   amount_cents: number;
   wechat_prepay_id: string;
+  out_trade_no: string;
   status: string;
 }
 
@@ -104,6 +104,76 @@ function calculateExpiresAt(billingPeriod: string): string {
   return now.toISOString();
 }
 
+// ─── Auth Helper ─────────────────────────────────────────────────────────────
+
+function base64UrlDecode(str: string): Uint8Array {
+  const padded = str.replace(/-/g, "+").replace(/_/g, "/");
+  const binary = atob(padded);
+  return Uint8Array.from(binary, (c) => c.charCodeAt(0));
+}
+
+/**
+ * Verify JWT signature (HS256) and return the authenticated openid.
+ */
+async function verifyJwtAndGetOpenid(
+  req: Request,
+): Promise<{ openid: string } | { error: string; status: number }> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return { error: "Missing or invalid Authorization header", status: 401 };
+  }
+
+  const token = authHeader.slice(7);
+  const parts = token.split(".");
+  if (parts.length !== 3) {
+    return { error: "Malformed JWT", status: 401 };
+  }
+
+  const [headerB64, payloadB64, signatureB64] = parts;
+
+  const jwtSecret =
+    Deno.env.get("JWT_SECRET") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(jwtSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["verify"],
+  );
+
+  const data = encoder.encode(`${headerB64}.${payloadB64}`);
+  const signature = base64UrlDecode(signatureB64);
+
+  const valid = await crypto.subtle.verify("HMAC", key, signature, data);
+  if (!valid) {
+    return { error: "Invalid JWT signature", status: 401 };
+  }
+
+  let payload: Record<string, unknown>;
+  try {
+    payload = JSON.parse(
+      new TextDecoder().decode(base64UrlDecode(payloadB64)),
+    );
+  } catch {
+    return { error: "Malformed JWT payload", status: 401 };
+  }
+
+  if (
+    typeof payload.exp === "number" &&
+    payload.exp < Math.floor(Date.now() / 1000)
+  ) {
+    return { error: "JWT has expired", status: 401 };
+  }
+
+  const openid = payload.sub;
+  if (!openid || typeof openid !== "string") {
+    return { error: "JWT missing 'sub' claim", status: 401 };
+  }
+
+  return { openid };
+}
+
 // ─── Main Handler ────────────────────────────────────────────────────────────
 
 Deno.serve(async (req: Request): Promise<Response> => {
@@ -120,21 +190,24 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   try {
+    // ── Verify JWT and extract authenticated user identity ───────────────
+    const authResult = await verifyJwtAndGetOpenid(req);
+    if ("error" in authResult) {
+      return new Response(
+        JSON.stringify({ error: authResult.error }),
+        { status: authResult.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const openid = authResult.openid;
+
     const body: VerifyPaymentRequest = await req.json();
-    const { order_id, openid } = body;
+    const { order_id } = body;
 
     // ── Validate inputs ──────────────────────────────────────────────────
 
     if (!order_id || typeof order_id !== "string") {
       return new Response(
         JSON.stringify({ error: "Missing or invalid 'order_id'" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!openid || typeof openid !== "string") {
-      return new Response(
-        JSON.stringify({ error: "Missing or invalid 'openid'" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -184,9 +257,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const serialNo = Deno.env.get("WECHAT_PAY_SERIAL_NO")!;
     const privateKeyPem = Deno.env.get("WECHAT_PAY_PRIVATE_KEY")!;
 
-    // Query by prepay transaction — we use the out_trade_no based lookup
-    // But we stored prepay_id, so we query by transaction via the merchant order query endpoint
-    const queryPath = `/v3/pay/transactions/id/${orderRecord.wechat_prepay_id}?mchid=${mchId}`;
+    // Query by merchant out_trade_no — the correct endpoint for verifying payment status
+    const queryPath = `/v3/pay/transactions/out-trade-no/${orderRecord.out_trade_no}?mchid=${mchId}`;
 
     const authorization = await buildWechatPayAuthHeader(
       "GET",

@@ -36,6 +36,7 @@ CREATE TABLE orders (
   billing_period TEXT NOT NULL CHECK (billing_period IN ('monthly', 'annual')),
   amount_cents INTEGER NOT NULL,
   wechat_prepay_id TEXT,
+  out_trade_no TEXT UNIQUE,
   status TEXT DEFAULT 'pending'
     CHECK (status IN ('pending', 'paid', 'failed', 'refunded')),
   created_at TIMESTAMPTZ DEFAULT now(),

@@ -42,3 +42,4 @@ supabase/.temp/
 REVIEW.md
 BUG_REPORT.md
 .swc/
+.gstack/

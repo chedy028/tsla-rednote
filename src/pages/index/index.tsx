@@ -81,7 +81,7 @@ function DashboardInline() {
         <Text style={{ fontSize: '56px', fontWeight: 'bold', display: 'block', color: '#333' }}>{tslaData.psRatio.toFixed(2)}x</Text>
         <Text style={{ fontSize: '24px', color: '#666', display: 'block', marginTop: '8px' }}>市销率 (Price-to-Sales)</Text>
         <View style={{ background: '#f0f0f0', borderRadius: '12px', padding: '12px 24px', marginTop: '16px' }}>
-          <Text style={{ fontSize: '22px', color: '#999' }}>🔒 订阅解锁估值解读与买卖信号</Text>
+          <Text style={{ fontSize: '22px', color: '#999' }}>🔒 订阅解锁详细估值解读</Text>
         </View>
       </View>
 
@@ -115,7 +115,7 @@ function DashboardInline() {
       <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px' }}>
         <Text style={{ fontSize: '28px', fontWeight: 'bold', display: 'block', marginBottom: '12px' }}>什么是 P/S 比率？</Text>
         <Text style={{ fontSize: '22px', color: '#666', display: 'block', lineHeight: 1.6 }}>
-          P/S (市销率) = 市值 ÷ 营收，是衡量公司估值的核心指标。订阅后可查看详细估值区间分析与买卖建议。
+          P/S (市销率) = 市值 ÷ 营收，是衡量公司估值的核心指标。订阅后可查看详细估值区间分析。
         </Text>
       </View>
 
@@ -142,7 +142,7 @@ function PricingInline() {
         <Text style={{ fontSize: '22px', color: '#666', display: 'block' }}>按年付 ¥49/年 · 每天只要1毛3</Text>
         <View style={{ marginTop: '16px' }}>
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ 实时 P/S 估值</Text>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ 买卖信号分析</Text>
+          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ 估值状态分析</Text>
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ 90天历史走势图</Text>
         </View>
       </View>
@@ -154,9 +154,10 @@ function PricingInline() {
         <Text style={{ fontSize: '22px', color: '#666', display: 'block' }}>按年付 ¥99/年 · 每天只要2毛7</Text>
         <View style={{ marginTop: '16px' }}>
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ 全部基础版功能</Text>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ AI 智能分析助手</Text>
+          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ AI 深度估值报告</Text>
+          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ AI 智能问答助手</Text>
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ 价格预警通知</Text>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ 多股票分析</Text>
+          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>✅ 无广告纯净体验</Text>
         </View>
       </View>
 
@@ -185,7 +186,7 @@ export default function Index() {
       onTikTokShare(() => {
         shareTikTok({
           title: 'TSLA 估值助手 - AI 驱动的特斯拉股票分析',
-          desc: '用 P/S 比率分析 TSLA 估值，AI 智能买卖信号，免费查看今日估值！',
+          desc: '用 P/S 比率分析 TSLA 估值水平，免费查看今日估值状态！',
         }).catch(() => {})
       })
     }
@@ -247,8 +248,8 @@ export default function Index() {
 
             <View className='feature'>
               <Text className='feature-icon'>🎯</Text>
-              <Text className='feature-title'>买卖信号</Text>
-              <Text className='feature-desc'>智能提示时机</Text>
+              <Text className='feature-title'>估值状态</Text>
+              <Text className='feature-desc'>历史分位参考</Text>
             </View>
           </View>
 
@@ -259,26 +260,26 @@ export default function Index() {
             </Button>
             <View className='pricing-link' onClick={handlePricing}>
               <Text className='price-tag'>低至 ¥4.08/月 解锁完整功能</Text>
-              <Text className='price-sub'>每天只要1毛6 · 按年付省17%</Text>
+              <Text className='price-sub'>每天只要1毛3 · 按年付省17%</Text>
             </View>
             <Text className='disclaimer'>
               📚 教育工具 · 不构成投资建议
             </Text>
           </View>
 
-          {/* Stats */}
+          {/* Why use this tool */}
           <View className='stats'>
             <View className='stat'>
-              <Text className='stat-number'>10,000+</Text>
-              <Text className='stat-label'>活跃用户</Text>
+              <Text className='stat-number'>📊</Text>
+              <Text className='stat-label'>P/S 估值模型</Text>
             </View>
             <View className='stat'>
-              <Text className='stat-number'>99.9%</Text>
-              <Text className='stat-label'>数据准确度</Text>
+              <Text className='stat-number'>⏱️</Text>
+              <Text className='stat-label'>15分钟数据更新</Text>
             </View>
             <View className='stat'>
-              <Text className='stat-number'>4.9★</Text>
-              <Text className='stat-label'>用户评分</Text>
+              <Text className='stat-number'>🚀</Text>
+              <Text className='stat-label'>加入早期用户</Text>
             </View>
           </View>
 

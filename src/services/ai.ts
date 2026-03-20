@@ -14,7 +14,7 @@ import {
   HISTORICAL_PS_DATA,
   analyzeValuation
 } from './valuation'
-import { getSessionToken } from './auth'
+import { getSessionToken, getOpenid } from './auth'
 
 // ==================== 类型定义 ====================
 
@@ -442,10 +442,15 @@ export async function getDeepAnalysis(stockData: TSLAStockData): Promise<AIAnaly
     const token = getSessionToken()
     const analysis = analyzeValuation(stockData.marketCap, stockData.revenueTTM)
 
+    const openid = getOpenid()
+    if (!openid) {
+      console.warn('AI 分析缺少 openid，降级到模板分析')
+      return getFallbackAnalysis(stockData)
+    }
+
     const res = await Taro.request<{
-      content: string
-      summary: string
-      confidence: 'high' | 'medium' | 'low'
+      analysis: string
+      timestamp: number
     }>({
       url: `${SUPABASE_URL}/functions/v1/ai-analyze`,
       method: 'POST',
@@ -455,28 +460,31 @@ export async function getDeepAnalysis(stockData: TSLAStockData): Promise<AIAnaly
         'Authorization': `Bearer ${token || SUPABASE_ANON_KEY}`
       },
       data: {
-        price: stockData.price,
-        psRatio: stockData.psRatio,
-        marketCap: stockData.marketCap,
-        revenueTTM: stockData.revenueTTM,
-        change: stockData.change,
-        changePercent: stockData.changePercent,
-        volume: stockData.volume,
-        fiftyTwoWeekHigh: stockData.fiftyTwoWeekHigh,
-        fiftyTwoWeekLow: stockData.fiftyTwoWeekLow,
-        valuationTier: stockData.valuationTier.tier,
-        percentile: analysis.percentile,
-        historicalAvg: analysis.historicalAvg,
-        historicalData: HISTORICAL_PS_DATA
+        openid,
+        stockData: {
+          symbol: 'TSLA',
+          currentPrice: stockData.price,
+          marketCap: stockData.marketCap,
+          volume: stockData.volume,
+          high52w: stockData.fiftyTwoWeekHigh,
+          low52w: stockData.fiftyTwoWeekLow,
+          psRatio: stockData.psRatio,
+          revenueTTM: stockData.revenueTTM,
+          change: stockData.change,
+          changePercent: stockData.changePercent,
+          valuationTier: stockData.valuationTier.tier,
+          percentile: analysis.percentile,
+          historicalAvg: analysis.historicalAvg
+        }
       },
       timeout: 30000  // AI 分析允许较长超时
     })
 
-    if (res.statusCode >= 200 && res.statusCode < 300 && res.data?.content) {
+    if (res.statusCode >= 200 && res.statusCode < 300 && res.data?.analysis) {
       const result: AIAnalysisResult = {
-        content: res.data.content,
-        summary: res.data.summary || '深度分析完成',
-        confidence: res.data.confidence || 'high',
+        content: res.data.analysis,
+        summary: res.data.analysis.slice(0, 100) + (res.data.analysis.length > 100 ? '...' : ''),
+        confidence: 'high',
         timestamp: Date.now(),
         source: 'ai'
       }
@@ -513,7 +521,12 @@ export async function askAI(
     const token = getSessionToken()
     const analysis = analyzeValuation(stockData.marketCap, stockData.revenueTTM)
 
-    const res = await Taro.request<{ answer: string }>({
+    const openid = getOpenid()
+    if (!openid) {
+      return quickAnswer
+    }
+
+    const res = await Taro.request<{ analysis: string; timestamp: number }>({
       url: `${SUPABASE_URL}/functions/v1/ai-analyze`,
       method: 'POST',
       header: {
@@ -522,19 +535,26 @@ export async function askAI(
         'Authorization': `Bearer ${token || SUPABASE_ANON_KEY}`
       },
       data: {
-        mode: 'chat',
+        openid,
         question,
-        price: stockData.price,
-        psRatio: stockData.psRatio,
-        valuationTier: stockData.valuationTier.tier,
-        percentile: analysis.percentile,
-        historicalAvg: analysis.historicalAvg
+        stockData: {
+          symbol: 'TSLA',
+          currentPrice: stockData.price,
+          marketCap: stockData.marketCap,
+          volume: stockData.volume,
+          high52w: stockData.fiftyTwoWeekHigh,
+          low52w: stockData.fiftyTwoWeekLow,
+          psRatio: stockData.psRatio,
+          valuationTier: stockData.valuationTier.tier,
+          percentile: analysis.percentile,
+          historicalAvg: analysis.historicalAvg
+        }
       },
       timeout: 30000
     })
 
-    if (res.statusCode >= 200 && res.statusCode < 300 && res.data?.answer) {
-      return res.data.answer
+    if (res.statusCode >= 200 && res.statusCode < 300 && res.data?.analysis) {
+      return res.data.analysis
     }
 
     // 降级到本地回答
