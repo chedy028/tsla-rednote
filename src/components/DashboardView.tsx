@@ -1,6 +1,5 @@
 import { View, Text } from '@tarojs/components'
-import { useState, useEffect, useCallback } from 'react'
-import Taro from '@tarojs/taro'
+import { useState, useEffect } from 'react'
 import { fetchTSLAData, getUpdateTimeText, type TSLAStockData } from '../services/stockApi'
 import { navigateToView } from '../services/navigation'
 import CustomTabBar from './CustomTabBar'

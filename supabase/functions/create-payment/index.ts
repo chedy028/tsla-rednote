@@ -6,7 +6,6 @@ type Plan = "basic" | "pro";
 type BillingPeriod = "monthly" | "annual";
 
 interface CreatePaymentRequest {
-  openid: string;
   plan: Plan;
   billingPeriod: BillingPeriod;
 }
@@ -137,18 +136,77 @@ async function signPaymentParams(
 
 // ─── Auth Helper ─────────────────────────────────────────────────────────────
 
-function getOpenidFromAuth(req: Request): string | null {
+function base64UrlDecode(str: string): Uint8Array {
+  const padded = str.replace(/-/g, "+").replace(/_/g, "/");
+  const binary = atob(padded);
+  return Uint8Array.from(binary, (c) => c.charCodeAt(0));
+}
+
+/**
+ * Verify JWT signature (HS256) and return the authenticated openid.
+ * Returns an error object if the token is missing, malformed, expired, or has
+ * an invalid signature.
+ */
+async function verifyJwtAndGetOpenid(
+  req: Request,
+): Promise<{ openid: string } | { error: string; status: number }> {
   const authHeader = req.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
-  // Simple JWT decode (payload only — signature verified elsewhere)
-  const token = authHeader.slice(7);
-  try {
-    const payloadB64 = token.split(".")[1];
-    const payload = JSON.parse(atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/")));
-    return payload.sub ?? null;
-  } catch {
-    return null;
+  if (!authHeader?.startsWith("Bearer ")) {
+    return { error: "Missing or invalid Authorization header", status: 401 };
   }
+
+  const token = authHeader.slice(7);
+  const parts = token.split(".");
+  if (parts.length !== 3) {
+    return { error: "Malformed JWT", status: 401 };
+  }
+
+  const [headerB64, payloadB64, signatureB64] = parts;
+
+  // Verify signature using HMAC-SHA256
+  const jwtSecret =
+    Deno.env.get("JWT_SECRET") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(jwtSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["verify"],
+  );
+
+  const data = encoder.encode(`${headerB64}.${payloadB64}`);
+  const signature = base64UrlDecode(signatureB64);
+
+  const valid = await crypto.subtle.verify("HMAC", key, signature, data);
+  if (!valid) {
+    return { error: "Invalid JWT signature", status: 401 };
+  }
+
+  // Decode and validate payload
+  let payload: Record<string, unknown>;
+  try {
+    payload = JSON.parse(
+      new TextDecoder().decode(base64UrlDecode(payloadB64)),
+    );
+  } catch {
+    return { error: "Malformed JWT payload", status: 401 };
+  }
+
+  // Check expiration
+  if (
+    typeof payload.exp === "number" &&
+    payload.exp < Math.floor(Date.now() / 1000)
+  ) {
+    return { error: "JWT has expired", status: 401 };
+  }
+
+  const openid = payload.sub;
+  if (!openid || typeof openid !== "string") {
+    return { error: "JWT missing 'sub' claim", status: 401 };
+  }
+
+  return { openid };
 }
 
 // ─── Main Handler ────────────────────────────────────────────────────────────
@@ -167,17 +225,20 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   try {
-    const body: CreatePaymentRequest = await req.json();
-    const { openid, plan, billingPeriod } = body;
-
-    // ── Validate inputs ──────────────────────────────────────────────────
-
-    if (!openid || typeof openid !== "string") {
+    // ── Verify JWT and extract authenticated user identity ───────────────
+    const authResult = await verifyJwtAndGetOpenid(req);
+    if ("error" in authResult) {
       return new Response(
-        JSON.stringify({ error: "Missing or invalid 'openid'" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: authResult.error }),
+        { status: authResult.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+    const openid = authResult.openid;
+
+    const body: CreatePaymentRequest = await req.json();
+    const { plan, billingPeriod } = body;
+
+    // ── Validate inputs ──────────────────────────────────────────────────
 
     if (!plan || !["basic", "pro"].includes(plan)) {
       return new Response(
@@ -294,6 +355,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         billing_period: billingPeriod,
         amount_cents: amountCents,
         wechat_prepay_id: prepayId,
+        out_trade_no: outTradeNo,
         status: "pending",
       })
       .select("id")

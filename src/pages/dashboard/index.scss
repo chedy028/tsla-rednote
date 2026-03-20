@@ -58,6 +58,41 @@
     }
   }
 
+  .fallback-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+
+    .fallback-banner-icon {
+      font-size: 36px;
+      flex-shrink: 0;
+    }
+
+    .fallback-banner-content {
+      flex: 1;
+    }
+
+    .fallback-banner-title {
+      display: block;
+      font-size: 28px;
+      font-weight: bold;
+      color: #856404;
+      margin-bottom: 8px;
+    }
+
+    .fallback-banner-desc {
+      display: block;
+      font-size: 24px;
+      color: #856404;
+      line-height: 1.4;
+    }
+  }
+
   .price-card {
     background: white;
     border-radius: 24px;
@@ -497,16 +532,14 @@
     }
 
     .chart-placeholder,
-    .ai-placeholder,
-    .alert-placeholder {
+    .ai-placeholder {
       background: #f8f9fa;
       border-radius: 12px;
       padding: 40px 32px;
       text-align: center;
 
       .chart-placeholder-text,
-      .ai-placeholder-text,
-      .alert-placeholder-text {
+      .ai-placeholder-text {
         font-size: 28px;
         color: #666;
         line-height: 1.6;

@@ -9,6 +9,7 @@ import Taro, { useDidShow } from '@tarojs/taro'
 import AIBubble, { AIBubbleLoading } from '../../components/AIBubble'
 import { fetchTSLAData, type TSLAStockData } from '../../services/stockApi'
 import { checkSubscription } from '../../services/payment'
+import { navigateToView } from '../../services/navigation'
 import {
   getQuickAnalysis,
   getQuickAnswer,
@@ -151,7 +152,7 @@ export default function AIAssistant() {
     if (!stockData || loading) return
 
     if (!isPro) {
-      Taro.switchTab({ url: '/pages/pricing/index' })
+      navigateToView('pricing')
       return
     }
 
@@ -190,7 +191,7 @@ export default function AIAssistant() {
 
   // 升级提示
   const handleUpgrade = useCallback(() => {
-    Taro.switchTab({ url: '/pages/pricing/index' })
+    navigateToView('pricing')
   }, [])
 
   // 初始加载状态

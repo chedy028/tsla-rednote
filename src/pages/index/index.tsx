@@ -71,6 +71,7 @@ function DashboardInline() {
           setLoading(false)
         }
       } catch (err) {
+        console.error('Failed to load data:', err)
         if (!cancelled) setLoading(false)
       }
     }
@@ -196,9 +197,6 @@ function PricingInline() {
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.basic.f2')}</Text>
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.basic.f3')}</Text>
         </View>
-        <Button role='button' onClick={() => { /* TODO: integrate payment */ }} style={{ width: '100%', background: '#00d4aa', color: 'white', fontSize: '28px', fontWeight: 'bold', borderRadius: '12px', padding: '16px', border: 'none', marginTop: '20px' }}>
-          {t('pricing.basic.btn')}
-        </Button>
       </View>
 
       {/* Pro Plan */}
@@ -211,10 +209,8 @@ function PricingInline() {
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.pro.f2')}</Text>
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.pro.f3')}</Text>
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.pro.f4')}</Text>
+          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.pro.f5')}</Text>
         </View>
-        <Button role='button' onClick={() => { /* TODO: integrate payment */ }} style={{ width: '100%', background: '#6c5ce7', color: 'white', fontSize: '28px', fontWeight: 'bold', borderRadius: '12px', padding: '16px', border: 'none', marginTop: '20px' }}>
-          {t('pricing.pro.btn')}
-        </Button>
       </View>
 
       <View role='button' tabIndex={0} onClick={() => navigateToView('dashboard')} style={{ textAlign: 'center', padding: '16px', marginBottom: '120px', cursor: 'pointer' }}>
@@ -248,7 +244,7 @@ export default function Index() {
       onTikTokShare(() => {
         shareTikTok({
           title: 'TSLA 估值助手 - AI 驱动的特斯拉股票分析',
-          desc: '用 P/S 比率分析 TSLA 估值，AI 智能买卖信号，免费查看今日估值！',
+          desc: '用 P/S 比率分析 TSLA 估值水平，免费查看今日估值状态！',
         }).catch(() => {})
       })
     }
@@ -287,12 +283,12 @@ export default function Index() {
             <Text className='tagline'>{t('app.tagline')}</Text>
           </View>
 
-          {/* Free Value Teaser - no thresholds revealed */}
+          {/* Free Value Teaser */}
           <View className='valuation-teaser'>
             <Text className='teaser-label'>{t('home.teaser.label')}</Text>
             <View className='teaser-gauge'>
-              <Text className='teaser-emoji'>📊</Text>
-              <Text className='teaser-tier'>{t('home.teaser.action')}</Text>
+              <Text className='teaser-emoji'>{t('home.teaser.emoji')}</Text>
+              <Text className='teaser-tier'>{t('home.teaser.tier')}</Text>
             </View>
             <Text className='teaser-hint'>{t('home.teaser.hint')}</Text>
           </View>
@@ -332,19 +328,19 @@ export default function Index() {
             </Text>
           </View>
 
-          {/* Stats */}
+          {/* Why use this tool */}
           <View className='stats'>
             <View className='stat'>
-              <Text className='stat-number'>10,000+</Text>
-              <Text className='stat-label'>{t('home.stats.users')}</Text>
+              <Text className='stat-number'>{t('home.stats.s1.icon')}</Text>
+              <Text className='stat-label'>{t('home.stats.s1.label')}</Text>
             </View>
             <View className='stat'>
-              <Text className='stat-number'>99.9%</Text>
-              <Text className='stat-label'>{t('home.stats.accuracy')}</Text>
+              <Text className='stat-number'>{t('home.stats.s2.icon')}</Text>
+              <Text className='stat-label'>{t('home.stats.s2.label')}</Text>
             </View>
             <View className='stat'>
-              <Text className='stat-number'>4.9★</Text>
-              <Text className='stat-label'>{t('home.stats.rating')}</Text>
+              <Text className='stat-number'>{t('home.stats.s3.icon')}</Text>
+              <Text className='stat-label'>{t('home.stats.s3.label')}</Text>
             </View>
           </View>
 
