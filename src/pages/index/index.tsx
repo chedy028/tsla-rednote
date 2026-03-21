@@ -39,7 +39,7 @@ function LangSwitcher() {
             borderRadius: '20px',
             fontSize: '22px',
             fontWeight: lang === l ? 'bold' : 'normal',
-            background: lang === l ? '#00d4aa' : 'rgba(255,255,255,0.2)',
+            background: lang === l ? '#009d80' : 'rgba(255,255,255,0.2)',
             color: lang === l ? 'white' : 'inherit',
             cursor: 'pointer',
           }}
@@ -136,8 +136,28 @@ function DashboardInline() {
 
   if (loading) {
     return (
-      <View style={{ minHeight: '100vh', background: '#f8f9fa', padding: '32px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={{ fontSize: '32px', color: '#999' }}>{t('dash.loading')}</Text>
+      <View style={{ minHeight: '100vh', background: '#f8f9fa', padding: '32px' }}>
+        {/* Skeleton: Price card */}
+        <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+          <View style={{ height: '40px', width: '60%', background: '#e8e8e8', borderRadius: '8px', marginBottom: '12px' }} />
+          <View style={{ height: '24px', width: '40%', background: '#f0f0f0', borderRadius: '6px' }} />
+        </View>
+        {/* Skeleton: Valuation card */}
+        <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <View style={{ width: '160px', height: '160px', borderRadius: '50%', background: '#e8e8e8', marginBottom: '16px' }} />
+          <View style={{ height: '24px', width: '50%', background: '#f0f0f0', borderRadius: '6px' }} />
+        </View>
+        {/* Skeleton: Stats grid */}
+        <View style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+          <View style={{ flex: 1, minWidth: '40%', background: 'white', borderRadius: '12px', padding: '16px' }}>
+            <View style={{ height: '16px', width: '50%', background: '#f0f0f0', borderRadius: '4px', marginBottom: '8px' }} />
+            <View style={{ height: '24px', width: '70%', background: '#e8e8e8', borderRadius: '6px' }} />
+          </View>
+          <View style={{ flex: 1, minWidth: '40%', background: 'white', borderRadius: '12px', padding: '16px' }}>
+            <View style={{ height: '16px', width: '50%', background: '#f0f0f0', borderRadius: '4px', marginBottom: '8px' }} />
+            <View style={{ height: '24px', width: '70%', background: '#e8e8e8', borderRadius: '6px' }} />
+          </View>
+        </View>
         <CustomTabBar />
       </View>
     )
@@ -145,8 +165,18 @@ function DashboardInline() {
 
   if (!tslaData) {
     return (
-      <View style={{ minHeight: '100vh', background: '#f8f9fa', padding: '32px' }}>
-        <Text style={{ fontSize: '28px', color: '#c62828' }}>{t('dash.error')}</Text>
+      <View style={{ minHeight: '100vh', background: '#f8f9fa', padding: '32px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ fontSize: '64px', display: 'block', marginBottom: '24px' }}>⚠️</Text>
+        <Text style={{ fontSize: '32px', fontWeight: 'bold', color: '#1a1a1a', display: 'block', marginBottom: '12px' }}>{t('dash.error')}</Text>
+        <Text style={{ fontSize: '24px', color: '#666', display: 'block', marginBottom: '32px', textAlign: 'center' }}>请检查网络连接后重试</Text>
+        <View
+          role='button'
+          tabIndex={0}
+          onClick={() => window.location.reload()}
+          style={{ background: '#009d80', borderRadius: '12px', padding: '16px 48px', cursor: 'pointer' }}
+        >
+          <Text style={{ fontSize: '28px', fontWeight: 'bold', color: 'white' }}>重新加载</Text>
+        </View>
         <CustomTabBar />
       </View>
     )
@@ -194,7 +224,7 @@ function DashboardInline() {
               </Text>
             </View>
             <View style={{ background: '#f0faf7', borderRadius: '8px', padding: '8px 16px', marginTop: '8px' }}>
-              <Text style={{ fontSize: '20px', color: '#00a884' }}>{t('dash.ps.subscribed')}</Text>
+              <Text style={{ fontSize: '20px', color: '#008a70' }}>{t('dash.ps.subscribed')}</Text>
             </View>
           </View>
         ) : (
@@ -287,7 +317,7 @@ function DashboardInline() {
                   setAiReport(result)
                 } catch {}
                 setReportLoading(false)
-              }} style={{ background: 'linear-gradient(135deg, #6c5ce7, #a29bfe)', borderRadius: '12px', padding: '16px', textAlign: 'center', cursor: 'pointer' }}>
+              }} style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)', borderRadius: '12px', padding: '16px', textAlign: 'center', cursor: 'pointer' }}>
                 <Text style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>
                   {reportLoading ? t('pro.report.loading') : t('pro.report.generate')}
                 </Text>
@@ -465,7 +495,7 @@ function DashboardInline() {
 
       {/* Upgrade CTA - only show for free users */}
       {!isPro && (
-        <View role='button' tabIndex={0} onClick={() => navigateToView('pricing')} style={{ background: 'linear-gradient(135deg, #00d4aa, #00b894)', borderRadius: '16px', padding: '24px', textAlign: 'center', marginBottom: '16px', cursor: 'pointer' }}>
+        <View role='button' tabIndex={0} onClick={() => navigateToView('pricing')} style={{ background: 'linear-gradient(135deg, #009d80, #008a70)', borderRadius: '16px', padding: '24px', textAlign: 'center', marginBottom: '16px', cursor: 'pointer' }}>
           <Text style={{ fontSize: '28px', fontWeight: 'bold', color: 'white', display: 'block' }}>{t('dash.upgrade')}</Text>
           <Text style={{ fontSize: '22px', color: 'rgba(255,255,255,0.8)', display: 'block', marginTop: '8px' }}>{t('dash.upgrade.sub')}</Text>
         </View>
@@ -476,7 +506,7 @@ function DashboardInline() {
         <View style={{ textAlign: 'center', marginBottom: '16px' }}>
           {!showRestore ? (
             <View role='button' tabIndex={0} onClick={() => setShowRestore(true)} style={{ cursor: 'pointer', padding: '8px' }}>
-              <Text style={{ fontSize: '22px', color: '#00d4aa', textDecoration: 'underline' }}>{t('dash.restore')}</Text>
+              <Text style={{ fontSize: '22px', color: '#008a70', textDecoration: 'underline' }}>{t('dash.restore')}</Text>
             </View>
           ) : (
             <View style={{ background: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
@@ -511,7 +541,7 @@ function DashboardInline() {
                     }
                     setRestoreLoading(false)
                   }}
-                  style={{ background: '#00d4aa', borderRadius: '8px', padding: '12px 20px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                  style={{ background: '#009d80', borderRadius: '8px', padding: '12px 20px', cursor: 'pointer', whiteSpace: 'nowrap' }}
                 >
                   <Text style={{ fontSize: '20px', fontWeight: 'bold', color: 'white' }}>
                     {restoreLoading ? t('dash.restore.checking') : t('dash.restore.verify')}
@@ -574,7 +604,7 @@ function PricingInline() {
       {/* Basic Plan */}
       <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px', border: '2px solid #00d4aa' }}>
         <Text style={{ fontSize: '28px', fontWeight: 'bold', display: 'block' }}>{t('pricing.basic')}</Text>
-        <Text style={{ fontSize: '48px', fontWeight: 'bold', color: '#00d4aa', display: 'block', marginTop: '16px' }}>{t('pricing.basic.price')}</Text>
+        <Text style={{ fontSize: '48px', fontWeight: 'bold', color: '#008a70', display: 'block', marginTop: '16px' }}>{t('pricing.basic.price')}</Text>
         <Text style={{ fontSize: '22px', color: '#666', display: 'block' }}>{t('pricing.basic.annual')}</Text>
         <View style={{ marginTop: '16px' }}>
           <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.basic.f1')}</Text>
@@ -585,7 +615,7 @@ function PricingInline() {
         <View
           role='button' tabIndex={0}
           onClick={() => handleSubscribe('basic', 'monthly')}
-          style={{ background: '#00d4aa', borderRadius: '12px', padding: '14px', textAlign: 'center', marginTop: '16px', cursor: 'pointer' }}
+          style={{ background: '#009d80', borderRadius: '12px', padding: '14px', textAlign: 'center', marginTop: '16px', cursor: 'pointer' }}
         >
           <Text style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>
             {loadingPlan === 'basic-monthly' ? t('pricing.subscribe.loading') : t('pricing.subscribe')}
@@ -596,7 +626,7 @@ function PricingInline() {
           onClick={() => handleSubscribe('basic', 'annual')}
           style={{ border: '2px solid #00d4aa', borderRadius: '12px', padding: '12px', textAlign: 'center', marginTop: '8px', cursor: 'pointer' }}
         >
-          <Text style={{ fontSize: '22px', color: '#00d4aa' }}>
+          <Text style={{ fontSize: '22px', color: '#008a70' }}>
             {loadingPlan === 'basic-annual' ? t('pricing.subscribe.loading') : t('pricing.or.annual')}
           </Text>
         </View>
@@ -636,7 +666,7 @@ function PricingInline() {
       </View>
 
       <View role='button' tabIndex={0} onClick={() => navigateToView('dashboard')} style={{ textAlign: 'center', padding: '16px', marginBottom: '120px', cursor: 'pointer' }}>
-        <Text style={{ fontSize: '24px', color: '#00d4aa' }}>{t('pricing.back')}</Text>
+        <Text style={{ fontSize: '24px', color: '#008a70' }}>{t('pricing.back')}</Text>
       </View>
 
       <CustomTabBar />
@@ -719,20 +749,26 @@ export default function Index() {
           <View className='features'>
             <View className='feature'>
               <Text className='feature-icon'>⚡</Text>
-              <Text className='feature-title'>{t('home.feature.price')}</Text>
-              <Text className='feature-desc'>{t('home.feature.price.desc')}</Text>
+              <View className='feature-content'>
+                <Text className='feature-title'>{t('home.feature.price')}</Text>
+                <Text className='feature-desc'>{t('home.feature.price.desc')}</Text>
+              </View>
             </View>
 
             <View className='feature'>
               <Text className='feature-icon'>🤖</Text>
-              <Text className='feature-title'>{t('home.feature.ai')}</Text>
-              <Text className='feature-desc'>{t('home.feature.ai.desc')}</Text>
+              <View className='feature-content'>
+                <Text className='feature-title'>{t('home.feature.ai')}</Text>
+                <Text className='feature-desc'>{t('home.feature.ai.desc')}</Text>
+              </View>
             </View>
 
             <View className='feature'>
               <Text className='feature-icon'>🎯</Text>
-              <Text className='feature-title'>{t('home.feature.signal')}</Text>
-              <Text className='feature-desc'>{t('home.feature.signal.desc')}</Text>
+              <View className='feature-content'>
+                <Text className='feature-title'>{t('home.feature.signal')}</Text>
+                <Text className='feature-desc'>{t('home.feature.signal.desc')}</Text>
+              </View>
             </View>
           </View>
 

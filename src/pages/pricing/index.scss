@@ -37,16 +37,16 @@
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 
     &.selected {
-      border-color: #00d4aa;
+      border-color: #008a70;
     }
 
     &.recommended {
       box-shadow: 0 8px 32px rgba(0, 212, 170, 0.2);
-      border-color: #00d4aa;
+      border-color: #008a70;
 
       .price-display {
         .currency, .price {
-          color: #00a88a;
+          color: #008a70;
         }
       }
     }
@@ -93,13 +93,13 @@
 
       .currency {
         font-size: 48px;
-        color: #00d4aa;
+        color: #008a70;
         font-weight: bold;
       }
 
       .price {
         font-size: 100px;
-        color: #00d4aa;
+        color: #008a70;
         font-weight: bold;
         line-height: 1;
       }
@@ -146,7 +146,7 @@
 
         &.highlight {
           .feature-text {
-            color: #00a88a;
+            color: #008a70;
             font-weight: 600;
           }
         }

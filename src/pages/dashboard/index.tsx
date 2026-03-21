@@ -180,7 +180,17 @@ export default function Dashboard() {
   if (!tslaData) {
     return (
       <View className='dashboard error'>
-        <Text>数据加载失败，请稍后重试</Text>
+        <Text style={{ fontSize: '64px', display: 'block', marginBottom: '24px' }}>⚠️</Text>
+        <Text style={{ fontSize: '32px', fontWeight: 'bold', display: 'block', marginBottom: '12px' }}>数据加载失败</Text>
+        <Text style={{ fontSize: '24px', color: '#999', display: 'block', marginBottom: '32px' }}>请检查网络连接后重试</Text>
+        <View
+          role='button'
+          tabIndex={0}
+          onClick={loadTSLAData}
+          style={{ background: '#009d80', borderRadius: '12px', padding: '16px 48px', cursor: 'pointer' }}
+        >
+          <Text style={{ fontSize: '28px', fontWeight: 'bold', color: 'white' }}>重新加载</Text>
+        </View>
       </View>
     )
   }
@@ -196,7 +206,7 @@ export default function Dashboard() {
             <Text className='title'>特斯拉 (TSLA)</Text>
             <Text className='subtitle'>Tesla, Inc.</Text>
           </View>
-          <View className='share-button' onClick={handleShare}>
+          <View className='share-button' role='button' tabIndex={0} onClick={handleShare}>
             <Text className='share-icon'>📤</Text>
             <Text className='share-text'>分享</Text>
           </View>
@@ -316,7 +326,7 @@ export default function Dashboard() {
             <Text className='upgrade-icon'>📊</Text>
             <Text className='upgrade-title'>90天历史走势图</Text>
             <Text className='upgrade-desc'>查看 P/S 比率的历史变化趋势，发现最佳买入时机</Text>
-            <View className='upgrade-button' onClick={handleUpgrade}>
+            <View className='upgrade-button' role='button' tabIndex={0} onClick={handleUpgrade}>
               <Text className='upgrade-button-text'>升级查看完整分析</Text>
             </View>
           </View>
@@ -325,12 +335,12 @@ export default function Dashboard() {
             <Text className='upgrade-icon'>🤖</Text>
             <Text className='upgrade-title'>AI 智能分析助手</Text>
             <Text className='upgrade-desc'>让 AI 帮你分析当前估值、解读市场信号</Text>
-            <View className='upgrade-button' onClick={handleOpenAI}>
+            <View className='upgrade-button' role='button' tabIndex={0} onClick={handleOpenAI}>
               <Text className='upgrade-button-text'>体验 AI 助手</Text>
             </View>
           </View>
 
-          <View className='upgrade-cta' onClick={handleUpgrade}>
+          <View className='upgrade-cta' role='button' tabIndex={0} onClick={handleUpgrade}>
             <Text className='upgrade-cta-text'>低至 ¥4.08/月 解锁全部功能</Text>
             <Text className='upgrade-cta-sub'>按年付费省17% · 每天只要1毛3</Text>
           </View>
@@ -409,7 +419,7 @@ export default function Dashboard() {
 
           <View className='pro-section'>
             <Text className='pro-section-title'>🤖 AI 分析助手</Text>
-            <View className='ai-placeholder' onClick={handleOpenAI}>
+            <View className='ai-placeholder' role='button' tabIndex={0} onClick={handleOpenAI}>
               <Text className='ai-placeholder-text'>
                 基于当前 P/S 比率 {tslaData.psRatio.toFixed(2)}x，TSLA 处于{valuation.textCn}区间。
                 点击进入 AI 助手获取深度分析 →
