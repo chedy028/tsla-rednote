@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.1.0] - 2026-03-21
+
+### Added
+- Supabase Auth magic link service for H5 users
+- Shared JWT auth utility for Edge Functions
+- Digest system: daily AI-generated valuation reports with email delivery
+- User preferences database schema for digest and notification settings
+- Shared AI module for reusable Gemini API integration
+- CLAUDE.md project guide for AI-assisted development sessions
+- Geist font typography system with CJK fallback chain
+- Full dark mode color palette in DESIGN.md
+- Motion specs: number counters, gauge fill, card entrance animations
+
+### Changed
+- Signal-first UX: valuation zone badge as hero, AI explanation gated behind tap
+- Simplified to single-tier pricing with digest onboarding flow
+- Design system: Industrial/Utilitarian aesthetic direction, Geist typography
+- Webpack config: vendors-react shared chunk for reliable page chunk loading
+
+### Fixed
+- Dashboard crash: jsxs runtime not available in Taro page chunks (critical)
+- JWT auth added to 4 previously unprotected Edge Functions
+- Revenue fallback status properly propagated to isFallback flag
+- Buy/sell language reframed as educational valuation analysis
+- Pricing page feature lists and FAQ corrected
+- Dashboard consolidated: removed redundant P/S ratio displays
+
+### Removed
+- Unused ai-analyze Edge Function
+- Dead code: DashboardView.tsx, PricingView.tsx
+
 ## [1.1.0.0] - 2026-03-21
 
 ### Added

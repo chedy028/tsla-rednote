@@ -11,12 +11,6 @@
 
 ## P2 — Medium Priority
 
-### Create CLAUDE.md
-- **What:** Project documentation for AI-assisted development sessions
-- **Why:** Every new session rediscovers project structure, Taro H5 constraints, build commands, inline-styles workaround. CLAUDE.md saves 10+ minutes per session.
-- **Context:** Key info to include: build commands (`npm run build:h5`), Taro H5 SPA router constraint (all views inlined in index.tsx), DESIGN.md color tokens, test framework (Vitest).
-- **Effort:** S (CC: 10 min)
-
 ### Handle Gemini content refusal gracefully
 - **What:** Catch Gemini safety filter refusals and show user-friendly message instead of generic error
 - **Why:** Generic error confuses users. Specific message ("此问题超出 AI 分析范围") sets expectations.
