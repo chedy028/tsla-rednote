@@ -2,7 +2,9 @@
  * Stripe Checkout Service
  * Opens Stripe Checkout for subscription payments.
  * Uses Supabase Edge Function as backend to create checkout sessions.
+ * Now uses authenticated requests via supabaseAuth.
  */
+import { authFetch } from './supabaseAuth'
 
 type Plan = 'basic' | 'pro'
 type BillingPeriod = 'monthly' | 'annual'
@@ -13,10 +15,6 @@ export interface SubscriptionStatus {
   expiresAt: string | null
 }
 
-// Supabase project URL
-const SUPABASE_URL = 'https://aiqpmtroekgrzyjcqkbl.supabase.co'
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpcXBtdHJvZWtncnp5amNxa2JsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyMjg2MTUsImV4cCI6MjA4MjgwNDYxNX0.Im4Kq8FzBV0ydSSkqcgcMxmP_KWZLL2OONFxeL8ppe8'
-
 const SUB_STORAGE_KEY = 'tsla_subscription'
 
 /**
@@ -24,15 +22,7 @@ const SUB_STORAGE_KEY = 'tsla_subscription'
  */
 export async function openStripeCheckout(plan: Plan, billingPeriod: BillingPeriod): Promise<void> {
   try {
-    const resp = await fetch(`${SUPABASE_URL}/functions/v1/create-stripe-checkout`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({ plan, billingPeriod }),
-    })
+    const resp = await authFetch('create-stripe-checkout', { plan, billingPeriod })
 
     const data = await resp.json()
 
@@ -64,15 +54,7 @@ export async function handlePaymentRedirect(): Promise<SubscriptionStatus | null
 
   // Verify the session with our edge function
   try {
-    const resp = await fetch(`${SUPABASE_URL}/functions/v1/check-subscription`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({ session_id: sessionId }),
-    })
+    const resp = await authFetch('check-subscription', { session_id: sessionId })
 
     const data = await resp.json()
 
@@ -100,15 +82,7 @@ export async function handlePaymentRedirect(): Promise<SubscriptionStatus | null
  */
 export async function checkSubscriptionByEmail(email: string): Promise<SubscriptionStatus> {
   try {
-    const resp = await fetch(`${SUPABASE_URL}/functions/v1/check-subscription`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({ email }),
-    })
+    const resp = await authFetch('check-subscription', { email })
 
     const data = await resp.json()
 

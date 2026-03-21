@@ -51,14 +51,7 @@ export interface TriggeredAlert {
 
 // ==================== Config ====================
 
-const SUPABASE_URL = 'https://aiqpmtroekgrzyjcqkbl.supabase.co'
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpcXBtdHJvZWtncnp5amNxa2JsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyMjg2MTUsImV4cCI6MjA4MjgwNDYxNX0.Im4Kq8FzBV0ydSSkqcgcMxmP_KWZLL2OONFxeL8ppe8'
-
-const apiHeaders = {
-  'Content-Type': 'application/json',
-  'apikey': SUPABASE_ANON_KEY,
-  'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-}
+import { authFetch } from './supabaseAuth'
 
 const AI_REPORT_CACHE_KEY = 'tsla_ai_report'
 const AI_CACHE_DURATION = 30 * 60 * 1000 // 30 min
@@ -127,14 +120,10 @@ export async function getDeepAnalysis(stockData: TSLAStockData, email?: string):
   }
 
   try {
-    const resp = await fetch(`${SUPABASE_URL}/functions/v1/ai-analyze-h5`, {
-      method: 'POST',
-      headers: apiHeaders,
-      body: JSON.stringify({
-        email: userEmail,
-        stockData: toStockPayload(stockData),
-        lang: getCurrentLang(),
-      }),
+    const resp = await authFetch('ai-analyze-h5', {
+      email: userEmail,
+      stockData: toStockPayload(stockData),
+      lang: getCurrentLang(),
     })
 
     const data = await resp.json()
@@ -205,15 +194,11 @@ export async function askAI(question: string, stockData: TSLAStockData, email?: 
   }
 
   try {
-    const resp = await fetch(`${SUPABASE_URL}/functions/v1/ai-analyze-h5`, {
-      method: 'POST',
-      headers: apiHeaders,
-      body: JSON.stringify({
-        email: userEmail,
-        question,
-        stockData: toStockPayload(stockData),
-        lang: getCurrentLang(),
-      }),
+    const resp = await authFetch('ai-analyze-h5', {
+      email: userEmail,
+      question,
+      stockData: toStockPayload(stockData),
+      lang: getCurrentLang(),
     })
 
     const data = await resp.json()
@@ -235,11 +220,7 @@ export async function askAI(question: string, stockData: TSLAStockData, email?: 
  */
 export async function listAlerts(email: string): Promise<PriceAlert[]> {
   try {
-    const resp = await fetch(`${SUPABASE_URL}/functions/v1/price-alerts`, {
-      method: 'POST',
-      headers: apiHeaders,
-      body: JSON.stringify({ action: 'list', email }),
-    })
+    const resp = await authFetch('price-alerts', { action: 'list', email })
     const data = await resp.json()
     return Array.isArray(data) ? data : []
   } catch {
@@ -252,14 +233,10 @@ export async function listAlerts(email: string): Promise<PriceAlert[]> {
  */
 export async function createAlert(email: string, type: AlertType, targetValue: number): Promise<PriceAlert | null> {
   try {
-    const resp = await fetch(`${SUPABASE_URL}/functions/v1/price-alerts`, {
-      method: 'POST',
-      headers: apiHeaders,
-      body: JSON.stringify({
-        action: 'create',
-        email,
-        alert: { type, target_value: targetValue },
-      }),
+    const resp = await authFetch('price-alerts', {
+      action: 'create',
+      email,
+      alert: { type, target_value: targetValue },
     })
     const data = await resp.json()
     return Array.isArray(data) ? data[0] : null
@@ -273,11 +250,7 @@ export async function createAlert(email: string, type: AlertType, targetValue: n
  */
 export async function deleteAlert(email: string, alertId: string): Promise<void> {
   try {
-    await fetch(`${SUPABASE_URL}/functions/v1/price-alerts`, {
-      method: 'POST',
-      headers: apiHeaders,
-      body: JSON.stringify({ action: 'delete', email, alert_id: alertId }),
-    })
+    await authFetch('price-alerts', { action: 'delete', email, alert_id: alertId })
   } catch {}
 }
 
@@ -290,15 +263,11 @@ export async function checkAlerts(
   currentPs: number
 ): Promise<{ triggered: TriggeredAlert[]; total_active: number }> {
   try {
-    const resp = await fetch(`${SUPABASE_URL}/functions/v1/price-alerts`, {
-      method: 'POST',
-      headers: apiHeaders,
-      body: JSON.stringify({
-        action: 'check',
-        email,
-        current_price: currentPrice,
-        current_ps: currentPs,
-      }),
+    const resp = await authFetch('price-alerts', {
+      action: 'check',
+      email,
+      current_price: currentPrice,
+      current_ps: currentPs,
     })
     return await resp.json()
   } catch {
