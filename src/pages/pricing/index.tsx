@@ -123,14 +123,6 @@ export default function Pricing() {
               <Text className='feature-icon'>✅</Text>
               <Text className='feature-text'>90 天历史价格图表</Text>
             </View>
-            <View className='feature-item'>
-              <Text className='feature-icon'>✅</Text>
-              <Text className='feature-text'>价格预警通知</Text>
-            </View>
-            <View className='feature-item'>
-              <Text className='feature-icon'>✅</Text>
-              <Text className='feature-text'>AI 智能分析助手</Text>
-            </View>
           </View>
 
           <Button
@@ -293,7 +285,7 @@ export default function Pricing() {
         <View className='faq-item'>
           <Text className='faq-question'>Q: 可以随时取消订阅吗？</Text>
           <Text className='faq-answer'>
-            A: 可以！随时在微信支付管理中取消，无任何手续费。
+            A: 可以！随时取消，无任何手续费。
           </Text>
         </View>
 
@@ -314,7 +306,7 @@ export default function Pricing() {
         <View className='faq-item'>
           <Text className='faq-question'>Q: 支持哪些支付方式？</Text>
           <Text className='faq-answer'>
-            A: 支持微信支付和支付宝，安全便捷。
+            A: 小程序端支持微信支付，网页端支持信用卡/借记卡（通过 Stripe），安全便捷。
           </Text>
         </View>
 
