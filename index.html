@@ -1,0 +1,32 @@
+<!doctype html><html><head><meta content="text/html; charset=utf-8" http-equiv="Content-Type"><meta content="width=device-width,initial-scale=1,user-scalable=no" name="viewport"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="format-detection" content="telephone=no,address=no"><meta name="apple-mobile-web-app-status-bar-style" content="white"><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"><meta name="description" content="特斯拉估值助手 - TSLA Valuation Tracker for Chinese Investors"><meta name="theme-color" content="#00d4aa"><link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>"><title>特斯拉估值助手 | TSLA Tracker</title><script>!function(n){function f(){var e=n.document.documentElement,r=e.getBoundingClientRect(),width=r.width,height=r.height,arr=[width,height].filter(function(value){return Boolean(value)}),w=Math.min.apply(Math,arr),x=40*w/750;e.style.fontSize=x>=40?"40px":x<=20?"20px":x+"px"}; n.addEventListener("resize",(function(){f()})),f()}(window);</script><script defer="defer" src="/tsla-rednote/runtime.js"></script><script defer="defer" src="/tsla-rednote/vendors-react.js"></script><script defer="defer" src="/tsla-rednote/767.js"></script><script defer="defer" src="/tsla-rednote/app.js"></script><link href="/tsla-rednote/css/app.css" rel="stylesheet"></head><body><div id="app"></div><script src="https://developers.tiktok.com/js/minis.js" async onerror="console.warn('[TikTok] SDK load failed')"></script><script>// TikTok Minis SDK Initialization
+    // Set your client key here after registering at developers.tiktok.com
+    // Or set via URL param: ?tt_client_key=YOUR_KEY
+    window.__TIKTOK_MINIS_READY__ = false;
+    window.__TIKTOK_CLIENT_KEY__ = '';
+
+    (function() {
+      // Try to get client key from:
+      // 1. URL parameter (for testing)
+      // 2. Hardcoded value (set after registration)
+      var TIKTOK_CLIENT_KEY = '';  // <-- SET YOUR KEY HERE AFTER REGISTRATION
+
+      try {
+        var params = new URLSearchParams(window.location.search || window.location.hash.split('?')[1] || '');
+        var urlKey = params.get('tt_client_key');
+        if (urlKey) TIKTOK_CLIENT_KEY = urlKey;
+      } catch(e) {}
+
+      if (TIKTOK_CLIENT_KEY && typeof TTMinis !== 'undefined') {
+        try {
+          TTMinis.init({ clientKey: TIKTOK_CLIENT_KEY });
+          window.__TIKTOK_MINIS_READY__ = true;
+          window.__TIKTOK_CLIENT_KEY__ = TIKTOK_CLIENT_KEY;
+          console.log('[TikTok Minis] SDK initialized');
+        } catch(e) {
+          console.warn('[TikTok Minis] Init failed:', e);
+        }
+      }
+
+      // Detect TikTok in-app browser (for analytics/UI adaptation)
+      window.__IS_TIKTOK_BROWSER__ = /TikTok|musical_ly|BytedanceWebview/i.test(navigator.userAgent || '');
+    })();</script></body></html>
