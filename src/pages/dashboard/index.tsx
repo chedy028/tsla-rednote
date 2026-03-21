@@ -3,66 +3,11 @@ import { useState, useEffect, useCallback } from 'react'
 import Taro from '@tarojs/taro'
 import { fetchTSLAData, getUpdateTimeText, type TSLAStockData } from '../../services/stockApi'
 import { checkSubscription } from '../../services/payment'
-import { HISTORICAL_PS_DATA, getHistoricalPercentile } from '../../services/valuation'
+import { HISTORICAL_PS_DATA } from '../../services/valuation'
 import { isTikTokMinis, onTikTokShare, shareTikTok, getShareContent } from '../../services/tiktokMinis'
 import { navigateToView } from '../../services/navigation'
 import CustomTabBar from '../../components/CustomTabBar'
 import './index.scss'
-
-// ==================== 估值状态分析 ====================
-
-interface ValuationStatus {
-  status: 'undervalued' | 'fairvalue' | 'overvalued'
-  emoji: string
-  label: string
-  color: string
-  reasons: string[]
-}
-
-function getValuationStatus(psRatio: number): ValuationStatus {
-  const percentile = getHistoricalPercentile(psRatio)
-  const historicalAvg = HISTORICAL_PS_DATA.reduce((sum, d) => sum + d.psRatio, 0) / HISTORICAL_PS_DATA.length
-
-  if (psRatio < 8) {
-    return {
-      status: 'undervalued',
-      emoji: '\uD83D\uDFE2',
-      label: '估值偏低',
-      color: '#2e7d32',
-      reasons: [
-        `P/S 比率 ${psRatio.toFixed(2)}x，低于历史均值 ${historicalAvg.toFixed(1)}x`,
-        `当前估值处于历史 ${percentile}% 分位`,
-        '相对历史水平，当前市销率处于较低区间'
-      ]
-    }
-  }
-
-  if (psRatio < 13) {
-    return {
-      status: 'fairvalue',
-      emoji: '\uD83D\uDFE1',
-      label: '估值合理',
-      color: '#f57f17',
-      reasons: [
-        `P/S 比率 ${psRatio.toFixed(2)}x，接近历史均值 ${historicalAvg.toFixed(1)}x`,
-        `历史分位 ${percentile}%，处于中间水平`,
-        '当前市销率处于历史合理区间'
-      ]
-    }
-  }
-
-  return {
-    status: 'overvalued',
-    emoji: '\uD83D\uDD34',
-    label: '估值偏高',
-    color: '#c62828',
-    reasons: [
-      `P/S 比率 ${psRatio.toFixed(2)}x，高于历史均值 ${historicalAvg.toFixed(1)}x`,
-      `历史分位 ${percentile}%，处于较高水平`,
-      '当前市销率高于历史多数时期'
-    ]
-  }
-}
 
 // ==================== 组件 ====================
 
@@ -303,45 +248,18 @@ export default function Dashboard() {
           </Text>
         </View>
         <View className='stat-item'>
-          <Text className='stat-label'>P/S 比率</Text>
-          <Text className='stat-value'>{tslaData.psRatio.toFixed(2)}x</Text>
+          <Text className='stat-label'>成交量</Text>
+          <Text className='stat-value'>
+            {(tslaData.volume / 1000000).toFixed(1)}M
+          </Text>
         </View>
         <View className='stat-item'>
-          <Text className='stat-label'>估值状态</Text>
-          <Text className='stat-value' style={{ color: valuation.color }}>
-            {valuation.textCn}
+          <Text className='stat-label'>52周区间</Text>
+          <Text className='stat-value'>
+            ${tslaData.fiftyTwoWeekLow.toFixed(0)}-${tslaData.fiftyTwoWeekHigh.toFixed(0)}
           </Text>
         </View>
       </View>
-
-      {/* Valuation Status - FREE for all users */}
-      {(() => {
-        const vstatus = getValuationStatus(tslaData.psRatio)
-        return (
-          <View className='signal-card'>
-            <View className='signal-header'>
-              <Text className='signal-title'>估值状态</Text>
-            </View>
-            <View className='signal-badge' style={{ backgroundColor: vstatus.color + '15', borderColor: vstatus.color }}>
-              <Text className='signal-emoji'>{vstatus.emoji}</Text>
-              <Text className='signal-label' style={{ color: vstatus.color }}>{vstatus.label}</Text>
-            </View>
-            <View className='signal-reasons'>
-              {vstatus.reasons.map((reason, idx) => (
-                <View className='signal-reason-item' key={`reason-${idx}`}>
-                  <Text className='signal-reason-bullet'>•</Text>
-                  <Text className='signal-reason-text'>{reason}</Text>
-                </View>
-              ))}
-            </View>
-            <View className='signal-disclaimer'>
-              <Text className='signal-disclaimer-text'>
-                以上分析基于 P/S 比率历史数据，仅反映估值水平，不构成任何投资建议
-              </Text>
-            </View>
-          </View>
-        )
-      })()}
 
       {/* Pro-gated features with upgrade prompts */}
       {!isPro ? (
@@ -451,20 +369,6 @@ export default function Dashboard() {
             </View>
           </View>
 
-          <View className='stats-grid'>
-            <View className='stat-item'>
-              <Text className='stat-label'>成交量</Text>
-              <Text className='stat-value'>
-                {(tslaData.volume / 1000000).toFixed(1)}M
-              </Text>
-            </View>
-            <View className='stat-item'>
-              <Text className='stat-label'>52周区间</Text>
-              <Text className='stat-value'>
-                ${tslaData.fiftyTwoWeekLow.toFixed(0)}-${tslaData.fiftyTwoWeekHigh.toFixed(0)}
-              </Text>
-            </View>
-          </View>
         </View>
       )}
 
