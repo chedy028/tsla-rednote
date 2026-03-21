@@ -1,4 +1,4 @@
-import { View, Text } from '@tarojs/components'
+import { View, Text, ScrollView } from '@tarojs/components'
 import { useState, useEffect, useCallback } from 'react'
 import Taro from '@tarojs/taro'
 import { fetchTSLAData, getUpdateTimeText, type TSLAStockData } from '../../services/stockApi'
@@ -71,6 +71,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [isPro, setIsPro] = useState(false)
   const [updateTimeText, setUpdateTimeText] = useState('加载中...')
+  const [refreshing, setRefreshing] = useState(false)
 
   const loadTSLAData = useCallback(async () => {
     try {
@@ -108,6 +109,21 @@ export default function Dashboard() {
     }, 30000) // 每30秒更新显示
     return () => clearInterval(timer)
   }, [tslaData])
+
+  const handleRefresh = useCallback(async () => {
+    if (refreshing) return
+    setRefreshing(true)
+    try {
+      const data = await fetchTSLAData()
+      setTslaData(data)
+      setUpdateTimeText(getUpdateTimeText(data.timestamp))
+    } catch (error) {
+      console.error('刷新失败:', error)
+      Taro.showToast({ title: '刷新失败', icon: 'none' })
+    } finally {
+      setRefreshing(false)
+    }
+  }, [refreshing])
 
   const handleUpgrade = () => {
     navigateToView('pricing')
@@ -198,7 +214,15 @@ export default function Dashboard() {
   const valuation = tslaData.valuationTier
 
   return (
-    <View className='dashboard'>
+    <ScrollView
+      className='dashboard'
+      scrollY
+      refresherEnabled
+      refresherTriggered={refreshing}
+      onRefresherRefresh={handleRefresh}
+      enhanced
+      showScrollbar={false}
+    >
       {/* Header */}
       <View className='header'>
         <View className='header-top'>
@@ -472,6 +496,6 @@ export default function Dashboard() {
       </View>
 
       <CustomTabBar />
-    </View>
+    </ScrollView>
   )
 }
