@@ -372,8 +372,8 @@ function parseYahooResult(
     revenueTTM: revenue.revenueTTM,
     valuationTier,
     timestamp: Date.now(),
-    isFallback: false,
-    revenueLastUpdated: revenue.lastUpdated
+    isFallback: revenue.isFallback || false,
+    revenueLastUpdated: revenue.isFallback ? `${revenue.lastUpdated} (静态回退值)` : revenue.lastUpdated
   }
 }
 
