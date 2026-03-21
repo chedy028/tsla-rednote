@@ -187,23 +187,6 @@ function DashboardInline() {
       {/* Language Switcher */}
       <LangSwitcher />
 
-      {/* Header */}
-      <View style={{ marginBottom: '24px' }}>
-        <Text style={{ fontSize: '40px', fontWeight: 'bold', display: 'block' }}>{t('dash.name')}</Text>
-        <Text style={{ fontSize: '24px', color: '#666', display: 'block' }}>{t('dash.company')}</Text>
-      </View>
-
-      {/* Price */}
-      <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-        <Text style={{ fontSize: '56px', fontWeight: 'bold', display: 'block' }}>${tslaData.price.toFixed(2)}</Text>
-        <Text style={{ fontSize: '24px', color: tslaData.change >= 0 ? '#2e7d32' : '#c62828', display: 'block', marginTop: '8px' }}>
-          {tslaData.change >= 0 ? '+' : ''}{tslaData.change.toFixed(2)} ({tslaData.change >= 0 ? '+' : ''}{tslaData.changePercent.toFixed(2)}%)
-        </Text>
-        <Text style={{ fontSize: '20px', color: '#999', display: 'block', marginTop: '8px' }}>
-          {getUpdateTimeText(tslaData.timestamp)}
-        </Text>
-      </View>
-
       {/* Payment success message */}
       {paymentMessage && (
         <View style={{ background: '#e8f5e9', borderRadius: '12px', padding: '16px', marginBottom: '16px', textAlign: 'center' }}>
@@ -211,30 +194,80 @@ function DashboardInline() {
         </View>
       )}
 
-      {/* Valuation - Pro users see full analysis, free users see locked */}
-      <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', textAlign: 'center' }}>
-        <Text style={{ fontSize: '24px', fontWeight: 'bold', display: 'block', marginBottom: '16px' }}>{t('dash.ps.title')}</Text>
-        <Text style={{ fontSize: '56px', fontWeight: 'bold', display: 'block', color: isPro ? (tslaData.psRatio < 10 ? '#2e7d32' : tslaData.psRatio < 15 ? '#f9a825' : '#c62828') : '#333' }}>{tslaData.psRatio.toFixed(2)}x</Text>
-        <Text style={{ fontSize: '24px', color: '#666', display: 'block', marginTop: '8px' }}>{t('dash.ps.label')}</Text>
+      {/* ==================== SIGNAL HERO (ALL USERS) ==================== */}
+      <View style={{ background: `linear-gradient(135deg, ${tslaData.valuationTier.color}22, ${tslaData.valuationTier.color}08)`, borderRadius: '24px', padding: '32px', marginBottom: '16px', textAlign: 'center', border: `3px solid ${tslaData.valuationTier.color}40` }}>
+        <Text style={{ fontSize: '20px', color: '#666', display: 'block', marginBottom: '8px', letterSpacing: '2px', textTransform: 'uppercase' }}>{t('dash.signal.zone')}</Text>
+        <Text style={{ fontSize: '72px', display: 'block', marginBottom: '8px' }}>{tslaData.valuationTier.emoji}</Text>
+        <Text style={{ fontSize: '48px', fontWeight: 'bold', display: 'block', color: tslaData.valuationTier.color }}>{tslaData.valuationTier.textCn}</Text>
+        <Text style={{ fontSize: '24px', color: '#666', display: 'block', marginTop: '12px' }}>P/S {tslaData.psRatio.toFixed(2)}x</Text>
+      </View>
+
+      {/* Price + Change (compact) */}
+      <View style={{ background: 'white', borderRadius: '16px', padding: '20px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View>
+          <Text style={{ fontSize: '20px', color: '#666', display: 'block' }}>{t('dash.name')}</Text>
+          <Text style={{ fontSize: '40px', fontWeight: 'bold', display: 'block' }}>${tslaData.price.toFixed(2)}</Text>
+        </View>
+        <View style={{ textAlign: 'right' }}>
+          <Text style={{ fontSize: '24px', fontWeight: 'bold', color: tslaData.change >= 0 ? '#2e7d32' : '#c62828', display: 'block' }}>
+            {tslaData.change >= 0 ? '+' : ''}{tslaData.change.toFixed(2)} ({tslaData.change >= 0 ? '+' : ''}{tslaData.changePercent.toFixed(2)}%)
+          </Text>
+          <Text style={{ fontSize: '18px', color: '#999', display: 'block', marginTop: '4px' }}>
+            {getUpdateTimeText(tslaData.timestamp)}
+          </Text>
+        </View>
+      </View>
+
+      {/* AI Explanation Card — locked for free, visible for Pro */}
+      <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+        <Text style={{ fontSize: '28px', fontWeight: 'bold', display: 'block', marginBottom: '16px' }}>{t('dash.signal.ai.title')}</Text>
         {isPro ? (
-          <View style={{ marginTop: '16px' }}>
-            <View style={{ background: tslaData.psRatio < 10 ? '#e8f5e9' : tslaData.psRatio < 15 ? '#fff8e1' : '#fce4ec', borderRadius: '12px', padding: '12px 24px' }}>
-              <Text style={{ fontSize: '22px', fontWeight: 'bold', color: tslaData.psRatio < 10 ? '#2e7d32' : tslaData.psRatio < 15 ? '#f9a825' : '#c62828' }}>
-                {tslaData.psRatio < 10 ? t('dash.ps.undervalued') : tslaData.psRatio < 15 ? t('dash.ps.fair') : t('dash.ps.overvalued')}
-              </Text>
-            </View>
-            <View style={{ background: '#f0faf7', borderRadius: '8px', padding: '8px 16px', marginTop: '8px' }}>
-              <Text style={{ fontSize: '20px', color: '#008a70' }}>{t('dash.ps.subscribed')}</Text>
-            </View>
+          <View>
+            {aiReport ? (
+              <View>
+                <Text style={{ fontSize: '20px', color: '#333', display: 'block', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{aiReport.content}</Text>
+                <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
+                  <Text style={{ fontSize: '18px', color: '#999' }}>
+                    {aiReport.source === 'ai' ? t('pro.report.powered') : ''} · {new Date(aiReport.timestamp).toLocaleTimeString()}
+                  </Text>
+                  <View role='button' tabIndex={0} onClick={async () => {
+                    if (!tslaData || reportLoading) return
+                    setReportLoading(true)
+                    try {
+                      localStorage.removeItem('tsla_ai_report')
+                      const result = await getDeepAnalysis(tslaData, proEmail || undefined)
+                      setAiReport(result)
+                    } catch {}
+                    setReportLoading(false)
+                  }} style={{ color: '#6c5ce7', cursor: 'pointer', padding: '4px 12px' }}>
+                    <Text style={{ fontSize: '20px', color: '#6c5ce7' }}>{reportLoading ? t('pro.report.loading') : t('pro.report.refresh')}</Text>
+                  </View>
+                </View>
+              </View>
+            ) : (
+              <View role='button' tabIndex={0} onClick={async () => {
+                if (!tslaData || reportLoading) return
+                setReportLoading(true)
+                try {
+                  const result = await getDeepAnalysis(tslaData, proEmail || undefined)
+                  setAiReport(result)
+                } catch {}
+                setReportLoading(false)
+              }} style={{ background: `linear-gradient(135deg, ${tslaData.valuationTier.color}30, ${tslaData.valuationTier.color}10)`, borderRadius: '12px', padding: '16px', textAlign: 'center', cursor: 'pointer' }}>
+                <Text style={{ fontSize: '24px', fontWeight: 'bold', color: tslaData.valuationTier.color }}>
+                  {reportLoading ? t('pro.report.loading') : t('pro.report.generate')}
+                </Text>
+              </View>
+            )}
           </View>
         ) : (
-          <View style={{ background: '#f0f0f0', borderRadius: '12px', padding: '12px 24px', marginTop: '16px' }}>
-            <Text style={{ fontSize: '22px', color: '#999' }}>{t('dash.ps.locked')}</Text>
+          <View role='button' tabIndex={0} onClick={() => navigateToView('pricing')} style={{ background: '#f5f5f5', borderRadius: '12px', padding: '20px', textAlign: 'center', cursor: 'pointer' }}>
+            <Text style={{ fontSize: '22px', color: '#666', display: 'block' }}>{t('dash.signal.ai.locked')}</Text>
           </View>
         )}
       </View>
 
-      {/* Stats Grid */}
+      {/* Stats Grid (compact) */}
       <View style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
         <View style={{ flex: 1, minWidth: '40%', background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
           <Text style={{ fontSize: '20px', color: '#666', display: 'block' }}>{t('dash.stat.mcap')}</Text>
@@ -243,14 +276,6 @@ function DashboardInline() {
         <View style={{ flex: 1, minWidth: '40%', background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
           <Text style={{ fontSize: '20px', color: '#666', display: 'block' }}>{t('dash.stat.rev')}</Text>
           <Text style={{ fontSize: '28px', fontWeight: 'bold', display: 'block' }}>${(tslaData.revenueTTM / 1e9).toFixed(0)}B</Text>
-        </View>
-        <View style={{ flex: 1, minWidth: '40%', background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-          <Text style={{ fontSize: '20px', color: '#666', display: 'block' }}>{t('dash.stat.vol')}</Text>
-          <Text style={{ fontSize: '28px', fontWeight: 'bold', display: 'block' }}>{(tslaData.volume / 1e6).toFixed(1)}M</Text>
-        </View>
-        <View style={{ flex: 1, minWidth: '40%', background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-          <Text style={{ fontSize: '20px', color: '#666', display: 'block' }}>{t('dash.stat.range')}</Text>
-          <Text style={{ fontSize: '24px', fontWeight: 'bold', display: 'block' }}>${tslaData.fiftyTwoWeekLow.toFixed(0)}-${tslaData.fiftyTwoWeekHigh.toFixed(0)}</Text>
         </View>
       </View>
 
@@ -283,47 +308,6 @@ function DashboardInline() {
               </View>
             </View>
           )}
-
-          {/* AI Valuation Report */}
-          <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-            <Text style={{ fontSize: '28px', fontWeight: 'bold', display: 'block', marginBottom: '16px' }}>{t('pro.report.title')}</Text>
-            {aiReport ? (
-              <View>
-                <Text style={{ fontSize: '20px', color: '#333', display: 'block', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{aiReport.content}</Text>
-                <View style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px' }}>
-                  <Text style={{ fontSize: '18px', color: '#999' }}>
-                    {aiReport.source === 'ai' ? t('pro.report.powered') : ''} · {new Date(aiReport.timestamp).toLocaleTimeString()}
-                  </Text>
-                  <View role='button' tabIndex={0} onClick={async () => {
-                    if (!tslaData || reportLoading) return
-                    setReportLoading(true)
-                    try {
-                      localStorage.removeItem('tsla_ai_report')
-                      const result = await getDeepAnalysis(tslaData, proEmail || undefined)
-                      setAiReport(result)
-                    } catch {}
-                    setReportLoading(false)
-                  }} style={{ color: '#6c5ce7', cursor: 'pointer', padding: '4px 12px' }}>
-                    <Text style={{ fontSize: '20px', color: '#6c5ce7' }}>{reportLoading ? t('pro.report.loading') : t('pro.report.refresh')}</Text>
-                  </View>
-                </View>
-              </View>
-            ) : (
-              <View role='button' tabIndex={0} onClick={async () => {
-                if (!tslaData || reportLoading) return
-                setReportLoading(true)
-                try {
-                  const result = await getDeepAnalysis(tslaData, proEmail || undefined)
-                  setAiReport(result)
-                } catch {}
-                setReportLoading(false)
-              }} style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)', borderRadius: '12px', padding: '16px', textAlign: 'center', cursor: 'pointer' }}>
-                <Text style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>
-                  {reportLoading ? t('pro.report.loading') : t('pro.report.generate')}
-                </Text>
-              </View>
-            )}
-          </View>
 
           {/* AI Q&A Chat */}
           <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
