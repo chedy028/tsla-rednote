@@ -176,7 +176,7 @@ function getDemoData(): TSLAStockData {
 
 // ==================== 环境检测 ====================
 
-const IS_H5 = typeof window !== 'undefined' && !window.__wxjs_environment
+const IS_H5 = typeof window !== 'undefined' && !(window as unknown as Record<string, unknown>).__wxjs_environment
 
 // ==================== CORS 代理配置 ====================
 
@@ -372,8 +372,8 @@ function parseYahooResult(
     revenueTTM: revenue.revenueTTM,
     valuationTier,
     timestamp: Date.now(),
-    isFallback: false,
-    revenueLastUpdated: revenue.lastUpdated
+    isFallback: revenue.isFallback || false,
+    revenueLastUpdated: revenue.isFallback ? `${revenue.lastUpdated} (静态回退值)` : revenue.lastUpdated
   }
 }
 

@@ -1,8 +1,10 @@
 /**
  * Supabase Edge Function: price-alerts
  * CRUD operations for TSLA price alerts (Pro feature).
+ * Auth: Supabase Auth JWT (H5 magic link) or WeChat JWT.
  * Alerts are stored in Supabase and checked client-side.
  */
+import { verifyAuth, errorResponse } from "../_shared/auth.ts";
 
 // ─── CORS Headers ────────────────────────────────────────────────────────────
 
@@ -179,6 +181,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   try {
+    // ── Auth ────────────────────────────────────────────────────────────
+    const auth = await verifyAuth(req);
+    if ("error" in auth) {
+      return errorResponse(auth.error, auth.status);
+    }
+
     const body: AlertRequest = await req.json();
     const { action, email } = body;
 

@@ -39,7 +39,7 @@ function LangSwitcher() {
             borderRadius: '20px',
             fontSize: '22px',
             fontWeight: lang === l ? 'bold' : 'normal',
-            background: lang === l ? '#00d4aa' : 'rgba(255,255,255,0.2)',
+            background: lang === l ? '#009d80' : 'rgba(255,255,255,0.2)',
             color: lang === l ? 'white' : 'inherit',
             cursor: 'pointer',
           }}
@@ -136,8 +136,28 @@ function DashboardInline() {
 
   if (loading) {
     return (
-      <View style={{ minHeight: '100vh', background: '#f8f9fa', padding: '32px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={{ fontSize: '32px', color: '#999' }}>{t('dash.loading')}</Text>
+      <View style={{ minHeight: '100vh', background: '#f8f9fa', padding: '32px' }}>
+        {/* Skeleton: Price card */}
+        <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+          <View style={{ height: '40px', width: '60%', background: '#e8e8e8', borderRadius: '8px', marginBottom: '12px' }} />
+          <View style={{ height: '24px', width: '40%', background: '#f0f0f0', borderRadius: '6px' }} />
+        </View>
+        {/* Skeleton: Valuation card */}
+        <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <View style={{ width: '160px', height: '160px', borderRadius: '50%', background: '#e8e8e8', marginBottom: '16px' }} />
+          <View style={{ height: '24px', width: '50%', background: '#f0f0f0', borderRadius: '6px' }} />
+        </View>
+        {/* Skeleton: Stats grid */}
+        <View style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+          <View style={{ flex: 1, minWidth: '40%', background: 'white', borderRadius: '12px', padding: '16px' }}>
+            <View style={{ height: '16px', width: '50%', background: '#f0f0f0', borderRadius: '4px', marginBottom: '8px' }} />
+            <View style={{ height: '24px', width: '70%', background: '#e8e8e8', borderRadius: '6px' }} />
+          </View>
+          <View style={{ flex: 1, minWidth: '40%', background: 'white', borderRadius: '12px', padding: '16px' }}>
+            <View style={{ height: '16px', width: '50%', background: '#f0f0f0', borderRadius: '4px', marginBottom: '8px' }} />
+            <View style={{ height: '24px', width: '70%', background: '#e8e8e8', borderRadius: '6px' }} />
+          </View>
+        </View>
         <CustomTabBar />
       </View>
     )
@@ -145,8 +165,18 @@ function DashboardInline() {
 
   if (!tslaData) {
     return (
-      <View style={{ minHeight: '100vh', background: '#f8f9fa', padding: '32px' }}>
-        <Text style={{ fontSize: '28px', color: '#c62828' }}>{t('dash.error')}</Text>
+      <View style={{ minHeight: '100vh', background: '#f8f9fa', padding: '32px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ fontSize: '64px', display: 'block', marginBottom: '24px' }}>⚠️</Text>
+        <Text style={{ fontSize: '32px', fontWeight: 'bold', color: '#1a1a1a', display: 'block', marginBottom: '12px' }}>{t('dash.error')}</Text>
+        <Text style={{ fontSize: '24px', color: '#666', display: 'block', marginBottom: '32px', textAlign: 'center' }}>请检查网络连接后重试</Text>
+        <View
+          role='button'
+          tabIndex={0}
+          onClick={() => window.location.reload()}
+          style={{ background: '#009d80', borderRadius: '12px', padding: '16px 48px', cursor: 'pointer' }}
+        >
+          <Text style={{ fontSize: '28px', fontWeight: 'bold', color: 'white' }}>重新加载</Text>
+        </View>
         <CustomTabBar />
       </View>
     )
@@ -157,23 +187,6 @@ function DashboardInline() {
       {/* Language Switcher */}
       <LangSwitcher />
 
-      {/* Header */}
-      <View style={{ marginBottom: '24px' }}>
-        <Text style={{ fontSize: '40px', fontWeight: 'bold', display: 'block' }}>{t('dash.name')}</Text>
-        <Text style={{ fontSize: '24px', color: '#666', display: 'block' }}>{t('dash.company')}</Text>
-      </View>
-
-      {/* Price */}
-      <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-        <Text style={{ fontSize: '56px', fontWeight: 'bold', display: 'block' }}>${tslaData.price.toFixed(2)}</Text>
-        <Text style={{ fontSize: '24px', color: tslaData.change >= 0 ? '#2e7d32' : '#c62828', display: 'block', marginTop: '8px' }}>
-          {tslaData.change >= 0 ? '+' : ''}{tslaData.change.toFixed(2)} ({tslaData.change >= 0 ? '+' : ''}{tslaData.changePercent.toFixed(2)}%)
-        </Text>
-        <Text style={{ fontSize: '20px', color: '#999', display: 'block', marginTop: '8px' }}>
-          {getUpdateTimeText(tslaData.timestamp)}
-        </Text>
-      </View>
-
       {/* Payment success message */}
       {paymentMessage && (
         <View style={{ background: '#e8f5e9', borderRadius: '12px', padding: '16px', marginBottom: '16px', textAlign: 'center' }}>
@@ -181,82 +194,35 @@ function DashboardInline() {
         </View>
       )}
 
-      {/* Valuation - Pro users see full analysis, free users see locked */}
-      <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', textAlign: 'center' }}>
-        <Text style={{ fontSize: '24px', fontWeight: 'bold', display: 'block', marginBottom: '16px' }}>{t('dash.ps.title')}</Text>
-        <Text style={{ fontSize: '56px', fontWeight: 'bold', display: 'block', color: isPro ? (tslaData.psRatio < 10 ? '#2e7d32' : tslaData.psRatio < 15 ? '#f9a825' : '#c62828') : '#333' }}>{tslaData.psRatio.toFixed(2)}x</Text>
-        <Text style={{ fontSize: '24px', color: '#666', display: 'block', marginTop: '8px' }}>{t('dash.ps.label')}</Text>
-        {isPro ? (
-          <View style={{ marginTop: '16px' }}>
-            <View style={{ background: tslaData.psRatio < 10 ? '#e8f5e9' : tslaData.psRatio < 15 ? '#fff8e1' : '#fce4ec', borderRadius: '12px', padding: '12px 24px' }}>
-              <Text style={{ fontSize: '22px', fontWeight: 'bold', color: tslaData.psRatio < 10 ? '#2e7d32' : tslaData.psRatio < 15 ? '#f9a825' : '#c62828' }}>
-                {tslaData.psRatio < 10 ? t('dash.ps.undervalued') : tslaData.psRatio < 15 ? t('dash.ps.fair') : t('dash.ps.overvalued')}
-              </Text>
-            </View>
-            <View style={{ background: '#f0faf7', borderRadius: '8px', padding: '8px 16px', marginTop: '8px' }}>
-              <Text style={{ fontSize: '20px', color: '#00a884' }}>{t('dash.ps.subscribed')}</Text>
-            </View>
-          </View>
-        ) : (
-          <View style={{ background: '#f0f0f0', borderRadius: '12px', padding: '12px 24px', marginTop: '16px' }}>
-            <Text style={{ fontSize: '22px', color: '#999' }}>{t('dash.ps.locked')}</Text>
-          </View>
-        )}
+      {/* ==================== SIGNAL HERO (ALL USERS) ==================== */}
+      <View style={{ background: `linear-gradient(135deg, ${tslaData.valuationTier.color}22, ${tslaData.valuationTier.color}08)`, borderRadius: '24px', padding: '32px', marginBottom: '16px', textAlign: 'center', border: `3px solid ${tslaData.valuationTier.color}40` }}>
+        <Text style={{ fontSize: '20px', color: '#666', display: 'block', marginBottom: '8px', letterSpacing: '2px', textTransform: 'uppercase' }}>{t('dash.signal.zone')}</Text>
+        <Text style={{ fontSize: '72px', display: 'block', marginBottom: '8px' }}>{tslaData.valuationTier.emoji}</Text>
+        <Text style={{ fontSize: '48px', fontWeight: 'bold', display: 'block', color: tslaData.valuationTier.color }}>{tslaData.valuationTier.textCn}</Text>
+        <Text style={{ fontSize: '24px', color: '#666', display: 'block', marginTop: '12px' }}>P/S {tslaData.psRatio.toFixed(2)}x</Text>
       </View>
 
-      {/* Stats Grid */}
-      <View style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
-        <View style={{ flex: 1, minWidth: '40%', background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-          <Text style={{ fontSize: '20px', color: '#666', display: 'block' }}>{t('dash.stat.mcap')}</Text>
-          <Text style={{ fontSize: '28px', fontWeight: 'bold', display: 'block' }}>${(tslaData.marketCap / 1e9).toFixed(0)}B</Text>
-        </View>
-        <View style={{ flex: 1, minWidth: '40%', background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-          <Text style={{ fontSize: '20px', color: '#666', display: 'block' }}>{t('dash.stat.rev')}</Text>
-          <Text style={{ fontSize: '28px', fontWeight: 'bold', display: 'block' }}>${(tslaData.revenueTTM / 1e9).toFixed(0)}B</Text>
-        </View>
-        <View style={{ flex: 1, minWidth: '40%', background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-          <Text style={{ fontSize: '20px', color: '#666', display: 'block' }}>{t('dash.stat.vol')}</Text>
-          <Text style={{ fontSize: '28px', fontWeight: 'bold', display: 'block' }}>{(tslaData.volume / 1e6).toFixed(1)}M</Text>
-        </View>
-        <View style={{ flex: 1, minWidth: '40%', background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-          <Text style={{ fontSize: '20px', color: '#666', display: 'block' }}>{t('dash.stat.range')}</Text>
-          <Text style={{ fontSize: '24px', fontWeight: 'bold', display: 'block' }}>${tslaData.fiftyTwoWeekLow.toFixed(0)}-${tslaData.fiftyTwoWeekHigh.toFixed(0)}</Text>
-        </View>
-      </View>
-
-      {/* ==================== PRO FEATURES ==================== */}
-      {isPro && (
+      {/* Price + Change (compact) */}
+      <View style={{ background: 'white', borderRadius: '16px', padding: '20px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <View>
-          {/* Email prompt for AI features */}
-          {!proEmail && !showEmailInput && (
-            <View role='button' tabIndex={0} onClick={() => setShowEmailInput(true)} style={{ background: '#fff3e0', borderRadius: '12px', padding: '16px', marginBottom: '16px', textAlign: 'center', cursor: 'pointer' }}>
-              <Text style={{ fontSize: '22px', color: '#e65100' }}>{t('pro.email.title')}</Text>
-            </View>
-          )}
-          {!proEmail && showEmailInput && (
-            <View style={{ background: 'white', borderRadius: '12px', padding: '16px', marginBottom: '16px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <input
-                type='email'
-                placeholder='email@example.com'
-                value={emailInput}
-                onChange={(e) => setEmailInput((e.target as HTMLInputElement).value)}
-                style={{ flex: 1, padding: '10px 14px', borderRadius: '8px', border: '2px solid #e0e0e0', fontSize: '16px', outline: 'none' }}
-              />
-              <View role='button' tabIndex={0} onClick={() => {
-                if (emailInput) {
-                  setProEmail(emailInput)
-                  setProEmailState(emailInput)
-                  setShowEmailInput(false)
-                }
-              }} style={{ background: '#6c5ce7', borderRadius: '8px', padding: '10px 20px', cursor: 'pointer' }}>
-                <Text style={{ fontSize: '20px', fontWeight: 'bold', color: 'white' }}>{t('pro.email.save')}</Text>
-              </View>
-            </View>
-          )}
+          <Text style={{ fontSize: '20px', color: '#666', display: 'block' }}>{t('dash.name')}</Text>
+          <Text style={{ fontSize: '40px', fontWeight: 'bold', display: 'block' }}>${tslaData.price.toFixed(2)}</Text>
+        </View>
+        <View style={{ textAlign: 'right' }}>
+          <Text style={{ fontSize: '24px', fontWeight: 'bold', color: tslaData.change >= 0 ? '#2e7d32' : '#c62828', display: 'block' }}>
+            {tslaData.change >= 0 ? '+' : ''}{tslaData.change.toFixed(2)} ({tslaData.change >= 0 ? '+' : ''}{tslaData.changePercent.toFixed(2)}%)
+          </Text>
+          <Text style={{ fontSize: '18px', color: '#999', display: 'block', marginTop: '4px' }}>
+            {getUpdateTimeText(tslaData.timestamp)}
+          </Text>
+        </View>
+      </View>
 
-          {/* AI Valuation Report */}
-          <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-            <Text style={{ fontSize: '28px', fontWeight: 'bold', display: 'block', marginBottom: '16px' }}>{t('pro.report.title')}</Text>
+      {/* AI Explanation Card — locked for free, visible for Pro */}
+      <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+        <Text style={{ fontSize: '28px', fontWeight: 'bold', display: 'block', marginBottom: '16px' }}>{t('dash.signal.ai.title')}</Text>
+        {isPro ? (
+          <View>
             {aiReport ? (
               <View>
                 <Text style={{ fontSize: '20px', color: '#333', display: 'block', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{aiReport.content}</Text>
@@ -287,13 +253,59 @@ function DashboardInline() {
                   setAiReport(result)
                 } catch {}
                 setReportLoading(false)
-              }} style={{ background: 'linear-gradient(135deg, #6c5ce7, #a29bfe)', borderRadius: '12px', padding: '16px', textAlign: 'center', cursor: 'pointer' }}>
-                <Text style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>
+              }} style={{ background: `linear-gradient(135deg, ${tslaData.valuationTier.color}30, ${tslaData.valuationTier.color}10)`, borderRadius: '12px', padding: '16px', textAlign: 'center', cursor: 'pointer' }}>
+                <Text style={{ fontSize: '24px', fontWeight: 'bold', color: tslaData.valuationTier.color }}>
                   {reportLoading ? t('pro.report.loading') : t('pro.report.generate')}
                 </Text>
               </View>
             )}
           </View>
+        ) : (
+          <View role='button' tabIndex={0} onClick={() => navigateToView('pricing')} style={{ background: '#f5f5f5', borderRadius: '12px', padding: '20px', textAlign: 'center', cursor: 'pointer' }}>
+            <Text style={{ fontSize: '22px', color: '#666', display: 'block' }}>{t('dash.signal.ai.locked')}</Text>
+          </View>
+        )}
+      </View>
+
+      {/* Stats Grid (compact) */}
+      <View style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+        <View style={{ flex: 1, minWidth: '40%', background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+          <Text style={{ fontSize: '20px', color: '#666', display: 'block' }}>{t('dash.stat.mcap')}</Text>
+          <Text style={{ fontSize: '28px', fontWeight: 'bold', display: 'block' }}>${(tslaData.marketCap / 1e9).toFixed(0)}B</Text>
+        </View>
+        <View style={{ flex: 1, minWidth: '40%', background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+          <Text style={{ fontSize: '20px', color: '#666', display: 'block' }}>{t('dash.stat.rev')}</Text>
+          <Text style={{ fontSize: '28px', fontWeight: 'bold', display: 'block' }}>${(tslaData.revenueTTM / 1e9).toFixed(0)}B</Text>
+        </View>
+      </View>
+
+      {/* ==================== PRO FEATURES ==================== */}
+      {isPro && (
+        <View>
+          {/* Onboarding: email prompt for daily digest delivery */}
+          {!proEmail && (
+            <View style={{ background: 'linear-gradient(135deg, #009d8020, #008a7010)', border: '2px solid #009d8040', borderRadius: '16px', padding: '24px', marginBottom: '16px' }}>
+              <Text style={{ fontSize: '26px', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>{t('pro.email.digest.title')}</Text>
+              <Text style={{ fontSize: '20px', color: '#666', display: 'block', marginBottom: '16px' }}>{t('pro.email.digest.desc')}</Text>
+              <View style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input
+                  type='email'
+                  placeholder='email@example.com'
+                  value={emailInput}
+                  onChange={(e) => setEmailInput((e.target as HTMLInputElement).value)}
+                  style={{ flex: 1, padding: '12px 16px', borderRadius: '10px', border: '2px solid #e0e0e0', fontSize: '16px', outline: 'none' }}
+                />
+                <View role='button' tabIndex={0} onClick={() => {
+                  if (emailInput) {
+                    setProEmail(emailInput)
+                    setProEmailState(emailInput)
+                  }
+                }} style={{ background: '#009d80', borderRadius: '10px', padding: '12px 24px', cursor: 'pointer', flexShrink: 0 }}>
+                  <Text style={{ fontSize: '20px', fontWeight: 'bold', color: 'white' }}>{t('pro.email.save')}</Text>
+                </View>
+              </View>
+            </View>
+          )}
 
           {/* AI Q&A Chat */}
           <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
@@ -465,7 +477,7 @@ function DashboardInline() {
 
       {/* Upgrade CTA - only show for free users */}
       {!isPro && (
-        <View role='button' tabIndex={0} onClick={() => navigateToView('pricing')} style={{ background: 'linear-gradient(135deg, #00d4aa, #00b894)', borderRadius: '16px', padding: '24px', textAlign: 'center', marginBottom: '16px', cursor: 'pointer' }}>
+        <View role='button' tabIndex={0} onClick={() => navigateToView('pricing')} style={{ background: 'linear-gradient(135deg, #009d80, #008a70)', borderRadius: '16px', padding: '24px', textAlign: 'center', marginBottom: '16px', cursor: 'pointer' }}>
           <Text style={{ fontSize: '28px', fontWeight: 'bold', color: 'white', display: 'block' }}>{t('dash.upgrade')}</Text>
           <Text style={{ fontSize: '22px', color: 'rgba(255,255,255,0.8)', display: 'block', marginTop: '8px' }}>{t('dash.upgrade.sub')}</Text>
         </View>
@@ -476,7 +488,7 @@ function DashboardInline() {
         <View style={{ textAlign: 'center', marginBottom: '16px' }}>
           {!showRestore ? (
             <View role='button' tabIndex={0} onClick={() => setShowRestore(true)} style={{ cursor: 'pointer', padding: '8px' }}>
-              <Text style={{ fontSize: '22px', color: '#00d4aa', textDecoration: 'underline' }}>{t('dash.restore')}</Text>
+              <Text style={{ fontSize: '22px', color: '#008a70', textDecoration: 'underline' }}>{t('dash.restore')}</Text>
             </View>
           ) : (
             <View style={{ background: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
@@ -511,7 +523,7 @@ function DashboardInline() {
                     }
                     setRestoreLoading(false)
                   }}
-                  style={{ background: '#00d4aa', borderRadius: '8px', padding: '12px 20px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                  style={{ background: '#009d80', borderRadius: '8px', padding: '12px 20px', cursor: 'pointer', whiteSpace: 'nowrap' }}
                 >
                   <Text style={{ fontSize: '20px', fontWeight: 'bold', color: 'white' }}>
                     {restoreLoading ? t('dash.restore.checking') : t('dash.restore.verify')}
@@ -553,11 +565,10 @@ function PricingInline() {
     return onLangChange(() => setLangTick(n => n + 1))
   }, [])
 
-  const handleSubscribe = useCallback(async (plan: 'basic' | 'pro', billing: 'monthly' | 'annual') => {
-    const key = `${plan}-${billing}`
-    setLoadingPlan(key)
+  const handleSubscribe = useCallback(async (billing: 'monthly' | 'annual') => {
+    setLoadingPlan(billing)
     try {
-      await openStripeCheckout(plan, billing)
+      await openStripeCheckout('basic', billing)
     } catch (err) {
       console.error('Checkout error:', err)
       setLoadingPlan(null)
@@ -569,74 +580,45 @@ function PricingInline() {
       {/* Language Switcher */}
       <LangSwitcher />
 
-      <Text style={{ fontSize: '40px', fontWeight: 'bold', display: 'block', textAlign: 'center', marginBottom: '32px' }}>{t('pricing.title')}</Text>
+      <Text style={{ fontSize: '40px', fontWeight: 'bold', display: 'block', textAlign: 'center', marginBottom: '8px' }}>{t('pricing.title')}</Text>
+      <Text style={{ fontSize: '22px', color: '#666', display: 'block', textAlign: 'center', marginBottom: '32px' }}>{t('dash.upgrade.sub')}</Text>
 
-      {/* Basic Plan */}
-      <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px', border: '2px solid #00d4aa' }}>
-        <Text style={{ fontSize: '28px', fontWeight: 'bold', display: 'block' }}>{t('pricing.basic')}</Text>
-        <Text style={{ fontSize: '48px', fontWeight: 'bold', color: '#00d4aa', display: 'block', marginTop: '16px' }}>{t('pricing.basic.price')}</Text>
-        <Text style={{ fontSize: '22px', color: '#666', display: 'block' }}>{t('pricing.basic.annual')}</Text>
-        <View style={{ marginTop: '16px' }}>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.basic.f1')}</Text>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.basic.f2')}</Text>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.basic.f3')}</Text>
-        </View>
-        {/* Subscribe buttons */}
-        <View
-          role='button' tabIndex={0}
-          onClick={() => handleSubscribe('basic', 'monthly')}
-          style={{ background: '#00d4aa', borderRadius: '12px', padding: '14px', textAlign: 'center', marginTop: '16px', cursor: 'pointer' }}
-        >
-          <Text style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>
-            {loadingPlan === 'basic-monthly' ? t('pricing.subscribe.loading') : t('pricing.subscribe')}
-          </Text>
-        </View>
-        <View
-          role='button' tabIndex={0}
-          onClick={() => handleSubscribe('basic', 'annual')}
-          style={{ border: '2px solid #00d4aa', borderRadius: '12px', padding: '12px', textAlign: 'center', marginTop: '8px', cursor: 'pointer' }}
-        >
-          <Text style={{ fontSize: '22px', color: '#00d4aa' }}>
-            {loadingPlan === 'basic-annual' ? t('pricing.subscribe.loading') : t('pricing.or.annual')}
-          </Text>
-        </View>
-      </View>
+      {/* Single Plan */}
+      <View style={{ background: 'white', borderRadius: '20px', padding: '32px', marginBottom: '24px', border: '3px solid #009d80', boxShadow: '0 4px 20px rgba(0,157,128,0.15)' }}>
+        <Text style={{ fontSize: '36px', fontWeight: 'bold', display: 'block', textAlign: 'center' }}>{t('pricing.basic.price')}</Text>
+        <Text style={{ fontSize: '22px', color: '#666', display: 'block', textAlign: 'center', marginTop: '4px' }}>{t('pricing.basic.annual')}</Text>
 
-      {/* Pro Plan */}
-      <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '24px' }}>
-        <Text style={{ fontSize: '28px', fontWeight: 'bold', display: 'block' }}>{t('pricing.pro')}</Text>
-        <Text style={{ fontSize: '48px', fontWeight: 'bold', color: '#6c5ce7', display: 'block', marginTop: '16px' }}>{t('pricing.pro.price')}</Text>
-        <Text style={{ fontSize: '22px', color: '#666', display: 'block' }}>{t('pricing.pro.annual')}</Text>
-        <View style={{ marginTop: '16px' }}>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.pro.f1')}</Text>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.pro.f2')}</Text>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.pro.f3')}</Text>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.pro.f4')}</Text>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.pro.f5')}</Text>
+        <View style={{ marginTop: '24px' }}>
+          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '12px' }}>{t('pricing.basic.f1')}</Text>
+          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '12px' }}>{t('pricing.basic.f2')}</Text>
+          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '12px' }}>{t('pricing.basic.f3')}</Text>
+          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '12px' }}>{t('pricing.pro.f2')}</Text>
+          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '12px' }}>{t('pricing.pro.f3')}</Text>
+          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '12px' }}>{t('pricing.pro.f4')}</Text>
         </View>
-        {/* Subscribe buttons */}
+
         <View
           role='button' tabIndex={0}
-          onClick={() => handleSubscribe('pro', 'monthly')}
-          style={{ background: '#6c5ce7', borderRadius: '12px', padding: '14px', textAlign: 'center', marginTop: '16px', cursor: 'pointer' }}
+          onClick={() => handleSubscribe('monthly')}
+          style={{ background: 'linear-gradient(135deg, #009d80, #008a70)', borderRadius: '14px', padding: '18px', textAlign: 'center', marginTop: '16px', cursor: 'pointer' }}
         >
-          <Text style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>
-            {loadingPlan === 'pro-monthly' ? t('pricing.subscribe.loading') : t('pricing.subscribe')}
+          <Text style={{ fontSize: '26px', fontWeight: 'bold', color: 'white' }}>
+            {loadingPlan === 'monthly' ? t('pricing.subscribe.loading') : t('pricing.subscribe')}
           </Text>
         </View>
         <View
           role='button' tabIndex={0}
-          onClick={() => handleSubscribe('pro', 'annual')}
-          style={{ border: '2px solid #6c5ce7', borderRadius: '12px', padding: '12px', textAlign: 'center', marginTop: '8px', cursor: 'pointer' }}
+          onClick={() => handleSubscribe('annual')}
+          style={{ border: '2px solid #009d80', borderRadius: '14px', padding: '14px', textAlign: 'center', marginTop: '10px', cursor: 'pointer' }}
         >
-          <Text style={{ fontSize: '22px', color: '#6c5ce7' }}>
-            {loadingPlan === 'pro-annual' ? t('pricing.subscribe.loading') : t('pricing.or.annual')}
+          <Text style={{ fontSize: '22px', color: '#008a70' }}>
+            {loadingPlan === 'annual' ? t('pricing.subscribe.loading') : t('pricing.or.annual')}
           </Text>
         </View>
       </View>
 
       <View role='button' tabIndex={0} onClick={() => navigateToView('dashboard')} style={{ textAlign: 'center', padding: '16px', marginBottom: '120px', cursor: 'pointer' }}>
-        <Text style={{ fontSize: '24px', color: '#00d4aa' }}>{t('pricing.back')}</Text>
+        <Text style={{ fontSize: '24px', color: '#008a70' }}>{t('pricing.back')}</Text>
       </View>
 
       <CustomTabBar />
@@ -719,20 +701,26 @@ export default function Index() {
           <View className='features'>
             <View className='feature'>
               <Text className='feature-icon'>⚡</Text>
-              <Text className='feature-title'>{t('home.feature.price')}</Text>
-              <Text className='feature-desc'>{t('home.feature.price.desc')}</Text>
+              <View className='feature-content'>
+                <Text className='feature-title'>{t('home.feature.price')}</Text>
+                <Text className='feature-desc'>{t('home.feature.price.desc')}</Text>
+              </View>
             </View>
 
             <View className='feature'>
               <Text className='feature-icon'>🤖</Text>
-              <Text className='feature-title'>{t('home.feature.ai')}</Text>
-              <Text className='feature-desc'>{t('home.feature.ai.desc')}</Text>
+              <View className='feature-content'>
+                <Text className='feature-title'>{t('home.feature.ai')}</Text>
+                <Text className='feature-desc'>{t('home.feature.ai.desc')}</Text>
+              </View>
             </View>
 
             <View className='feature'>
               <Text className='feature-icon'>🎯</Text>
-              <Text className='feature-title'>{t('home.feature.signal')}</Text>
-              <Text className='feature-desc'>{t('home.feature.signal.desc')}</Text>
+              <View className='feature-content'>
+                <Text className='feature-title'>{t('home.feature.signal')}</Text>
+                <Text className='feature-desc'>{t('home.feature.signal.desc')}</Text>
+              </View>
             </View>
           </View>
 

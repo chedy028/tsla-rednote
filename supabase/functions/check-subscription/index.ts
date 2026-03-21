@@ -1,8 +1,10 @@
 /**
  * Supabase Edge Function: check-subscription
  * Checks subscription status by email (for H5/web version).
+ * Auth: Supabase Auth JWT (H5 magic link) or WeChat JWT.
  * Also handles Stripe webhook-style updates after checkout.
  */
+import { verifyAuth, errorResponse } from "../_shared/auth.ts";
 
 // ─── CORS Headers ────────────────────────────────────────────────────────────
 
@@ -28,6 +30,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   try {
+    // ── Auth ────────────────────────────────────────────────────────────
+    const auth = await verifyAuth(req);
+    if ("error" in auth) {
+      return errorResponse(auth.error, auth.status);
+    }
+
     const { email, session_id } = await req.json();
 
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");

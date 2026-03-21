@@ -23,7 +23,7 @@ const VALUATION_TIERS: { maxPs: number; tier: ValuationTier }[] = [
       emoji: '💚',
       textCn: '超值',
       textEn: 'BARGAIN',
-      description: '极度低估，罕见买入机会'
+      description: '估值处于历史低位区间'
     }
   },
   {
@@ -34,7 +34,7 @@ const VALUATION_TIERS: { maxPs: number; tier: ValuationTier }[] = [
       emoji: '🟢',
       textCn: '便宜',
       textEn: 'CHEAP',
-      description: '估值偏低，可考虑建仓'
+      description: '估值低于历史均值水平'
     }
   },
   {
@@ -45,7 +45,7 @@ const VALUATION_TIERS: { maxPs: number; tier: ValuationTier }[] = [
       emoji: '🟡',
       textCn: '合理',
       textEn: 'FAIR',
-      description: '估值合理，适合持有观望'
+      description: '估值处于历史合理区间'
     }
   },
   {
@@ -56,7 +56,7 @@ const VALUATION_TIERS: { maxPs: number; tier: ValuationTier }[] = [
       emoji: '🟠',
       textCn: '偏贵',
       textEn: 'EXPENSIVE',
-      description: '估值偏高，谨慎追涨'
+      description: '估值高于历史多数时期'
     }
   },
   {
@@ -67,7 +67,7 @@ const VALUATION_TIERS: { maxPs: number; tier: ValuationTier }[] = [
       emoji: '🔴',
       textCn: '高估',
       textEn: 'OVERPRICED',
-      description: '市场过度乐观，注意风险'
+      description: '估值显著高于历史水平'
     }
   }
 ]

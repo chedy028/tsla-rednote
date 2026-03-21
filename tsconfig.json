@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "ES2018",
     "module": "ESNext",
+    "lib": ["ES2021", "DOM"],
     "moduleResolution": "node",
     "jsx": "react-jsx",
     "strict": true,

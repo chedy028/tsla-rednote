@@ -1,85 +1,13 @@
-import { View, Text } from '@tarojs/components'
+import { View, Text, ScrollView } from '@tarojs/components'
 import { useState, useEffect, useCallback } from 'react'
 import Taro from '@tarojs/taro'
 import { fetchTSLAData, getUpdateTimeText, type TSLAStockData } from '../../services/stockApi'
 import { checkSubscription } from '../../services/payment'
-import { HISTORICAL_PS_DATA, getHistoricalPercentile } from '../../services/valuation'
+import { HISTORICAL_PS_DATA } from '../../services/valuation'
 import { isTikTokMinis, onTikTokShare, shareTikTok, getShareContent } from '../../services/tiktokMinis'
+import { navigateToView } from '../../services/navigation'
 import CustomTabBar from '../../components/CustomTabBar'
 import './index.scss'
-
-// ==================== 买卖信号分析 ====================
-
-interface BuySellSignal {
-  signal: 'buy' | 'hold' | 'sell'
-  emoji: string
-  label: string
-  color: string
-  reasons: string[]
-}
-
-function getBuySellSignal(psRatio: number, changePercent: number): BuySellSignal {
-  const percentile = getHistoricalPercentile(psRatio)
-  const historicalAvg = HISTORICAL_PS_DATA.reduce((sum, d) => sum + d.psRatio, 0) / HISTORICAL_PS_DATA.length
-
-  if (psRatio < 6) {
-    return {
-      signal: 'buy',
-      emoji: '\uD83D\uDFE2',
-      label: '买入信号',
-      color: '#2e7d32',
-      reasons: [
-        `P/S 比率 ${psRatio.toFixed(2)}x 低于 6x，处于历史低位`,
-        `当前估值处于历史 ${percentile}% 分位，属于价值区间`,
-        `远低于历史均值 ${historicalAvg.toFixed(1)}x，存在较大上涨空间`,
-        '建议：可分批建仓，逢低加仓'
-      ]
-    }
-  }
-
-  if (psRatio < 8) {
-    return {
-      signal: 'buy',
-      emoji: '\uD83D\uDFE2',
-      label: '买入信号',
-      color: '#2e7d32',
-      reasons: [
-        `P/S 比率 ${psRatio.toFixed(2)}x，估值偏低`,
-        `低于历史均值 ${historicalAvg.toFixed(1)}x`,
-        `历史分位 ${percentile}%，具有投资吸引力`,
-        '建议：适合逐步建仓'
-      ]
-    }
-  }
-
-  if (psRatio < 13) {
-    return {
-      signal: 'hold',
-      emoji: '\uD83D\uDFE1',
-      label: '持有观望',
-      color: '#f57f17',
-      reasons: [
-        `P/S 比率 ${psRatio.toFixed(2)}x，估值处于合理区间`,
-        `接近历史均值 ${historicalAvg.toFixed(1)}x`,
-        `历史分位 ${percentile}%，不高不低`,
-        '建议：已持仓者继续持有，空仓者等待回调'
-      ]
-    }
-  }
-
-  return {
-    signal: 'sell',
-    emoji: '\uD83D\uDD34',
-    label: '卖出信号',
-    color: '#c62828',
-    reasons: [
-      `P/S 比率 ${psRatio.toFixed(2)}x，估值偏高`,
-      `高于历史均值 ${historicalAvg.toFixed(1)}x`,
-      `历史分位 ${percentile}%，市场情绪过热`,
-      '建议：考虑分批减仓锁定收益'
-    ]
-  }
-}
 
 // ==================== 组件 ====================
 
@@ -88,6 +16,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [isPro, setIsPro] = useState(false)
   const [updateTimeText, setUpdateTimeText] = useState('加载中...')
+  const [refreshing, setRefreshing] = useState(false)
 
   const loadTSLAData = useCallback(async () => {
     try {
@@ -126,14 +55,23 @@ export default function Dashboard() {
     return () => clearInterval(timer)
   }, [tslaData])
 
-  const handleUpgrade = () => {
-    if (typeof window !== 'undefined') {
-      // Use navigation service to avoid Taro router conflicts
-      const { navigateToView } = require('../../services/navigation')
-      navigateToView('pricing')
-    } else {
-      Taro.reLaunch({ url: '/pages/pricing/index' })
+  const handleRefresh = useCallback(async () => {
+    if (refreshing) return
+    setRefreshing(true)
+    try {
+      const data = await fetchTSLAData()
+      setTslaData(data)
+      setUpdateTimeText(getUpdateTimeText(data.timestamp))
+    } catch (error) {
+      console.error('刷新失败:', error)
+      Taro.showToast({ title: '刷新失败', icon: 'none' })
+    } finally {
+      setRefreshing(false)
     }
+  }, [refreshing])
+
+  const handleUpgrade = () => {
+    navigateToView('pricing')
   }
 
   const handleOpenAI = () => {
@@ -203,7 +141,17 @@ export default function Dashboard() {
   if (!tslaData) {
     return (
       <View className='dashboard error'>
-        <Text>数据加载失败，请稍后重试</Text>
+        <Text style={{ fontSize: '64px', display: 'block', marginBottom: '24px' }}>⚠️</Text>
+        <Text style={{ fontSize: '32px', fontWeight: 'bold', display: 'block', marginBottom: '12px' }}>数据加载失败</Text>
+        <Text style={{ fontSize: '24px', color: '#999', display: 'block', marginBottom: '32px' }}>请检查网络连接后重试</Text>
+        <View
+          role='button'
+          tabIndex={0}
+          onClick={loadTSLAData}
+          style={{ background: '#009d80', borderRadius: '12px', padding: '16px 48px', cursor: 'pointer' }}
+        >
+          <Text style={{ fontSize: '28px', fontWeight: 'bold', color: 'white' }}>重新加载</Text>
+        </View>
       </View>
     )
   }
@@ -211,7 +159,15 @@ export default function Dashboard() {
   const valuation = tslaData.valuationTier
 
   return (
-    <View className='dashboard'>
+    <ScrollView
+      className='dashboard'
+      scrollY
+      refresherEnabled
+      refresherTriggered={refreshing}
+      onRefresherRefresh={handleRefresh}
+      enhanced
+      showScrollbar={false}
+    >
       {/* Header */}
       <View className='header'>
         <View className='header-top'>
@@ -219,12 +175,26 @@ export default function Dashboard() {
             <Text className='title'>特斯拉 (TSLA)</Text>
             <Text className='subtitle'>Tesla, Inc.</Text>
           </View>
-          <View className='share-button' onClick={handleShare}>
+          <View className='share-button' role='button' tabIndex={0} onClick={handleShare}>
             <Text className='share-icon'>📤</Text>
             <Text className='share-text'>分享</Text>
           </View>
         </View>
       </View>
+
+      {/* Fallback data warning banner */}
+      {tslaData.isFallback && (
+        <View className='fallback-banner'>
+          <Text className='fallback-banner-icon'>&#9888;&#65039;</Text>
+          <View className='fallback-banner-content'>
+            <Text className='fallback-banner-title'>数据可能不准确</Text>
+            <Text className='fallback-banner-desc'>
+              无法连接实时数据源，当前显示为演示数据，仅供参考。
+              {tslaData.revenueLastUpdated ? ` 营收数据来源: ${tslaData.revenueLastUpdated}` : ''}
+            </Text>
+          </View>
+        </View>
+      )}
 
       {/* Price Card - FREE for all users */}
       <View className='price-card'>
@@ -239,7 +209,9 @@ export default function Dashboard() {
             </Text>
           </View>
         </View>
-        <Text className='update-time'>{updateTimeText}</Text>
+        <Text className='update-time'>
+          {tslaData.isFallback ? '演示数据 - 非实时' : updateTimeText}
+        </Text>
       </View>
 
       {/* Valuation Card - P/S ratio and tier are FREE for everyone */}
@@ -276,45 +248,18 @@ export default function Dashboard() {
           </Text>
         </View>
         <View className='stat-item'>
-          <Text className='stat-label'>P/S 比率</Text>
-          <Text className='stat-value'>{tslaData.psRatio.toFixed(2)}x</Text>
+          <Text className='stat-label'>成交量</Text>
+          <Text className='stat-value'>
+            {(tslaData.volume / 1000000).toFixed(1)}M
+          </Text>
         </View>
         <View className='stat-item'>
-          <Text className='stat-label'>估值状态</Text>
-          <Text className='stat-value' style={{ color: valuation.color }}>
-            {valuation.textCn}
+          <Text className='stat-label'>52周区间</Text>
+          <Text className='stat-value'>
+            ${tslaData.fiftyTwoWeekLow.toFixed(0)}-${tslaData.fiftyTwoWeekHigh.toFixed(0)}
           </Text>
         </View>
       </View>
-
-      {/* Buy/Sell Signal - FREE for all users */}
-      {(() => {
-        const signal = getBuySellSignal(tslaData.psRatio, tslaData.changePercent)
-        return (
-          <View className='signal-card'>
-            <View className='signal-header'>
-              <Text className='signal-title'>买卖信号</Text>
-            </View>
-            <View className='signal-badge' style={{ backgroundColor: signal.color + '15', borderColor: signal.color }}>
-              <Text className='signal-emoji'>{signal.emoji}</Text>
-              <Text className='signal-label' style={{ color: signal.color }}>{signal.label}</Text>
-            </View>
-            <View className='signal-reasons'>
-              {signal.reasons.map((reason, idx) => (
-                <View className='signal-reason-item' key={`reason-${idx}`}>
-                  <Text className='signal-reason-bullet'>•</Text>
-                  <Text className='signal-reason-text'>{reason}</Text>
-                </View>
-              ))}
-            </View>
-            <View className='signal-disclaimer'>
-              <Text className='signal-disclaimer-text'>
-                以上信号基于 P/S 比率分析，仅供参考
-              </Text>
-            </View>
-          </View>
-        )
-      })()}
 
       {/* Pro-gated features with upgrade prompts */}
       {!isPro ? (
@@ -323,7 +268,7 @@ export default function Dashboard() {
             <Text className='upgrade-icon'>📊</Text>
             <Text className='upgrade-title'>90天历史走势图</Text>
             <Text className='upgrade-desc'>查看 P/S 比率的历史变化趋势，发现最佳买入时机</Text>
-            <View className='upgrade-button' onClick={handleUpgrade}>
+            <View className='upgrade-button' role='button' tabIndex={0} onClick={handleUpgrade}>
               <Text className='upgrade-button-text'>升级查看完整分析</Text>
             </View>
           </View>
@@ -332,23 +277,14 @@ export default function Dashboard() {
             <Text className='upgrade-icon'>🤖</Text>
             <Text className='upgrade-title'>AI 智能分析助手</Text>
             <Text className='upgrade-desc'>让 AI 帮你分析当前估值、解读市场信号</Text>
-            <View className='upgrade-button' onClick={handleOpenAI}>
+            <View className='upgrade-button' role='button' tabIndex={0} onClick={handleOpenAI}>
               <Text className='upgrade-button-text'>体验 AI 助手</Text>
             </View>
           </View>
 
-          <View className='upgrade-card'>
-            <Text className='upgrade-icon'>🔔</Text>
-            <Text className='upgrade-title'>价格预警通知</Text>
-            <Text className='upgrade-desc'>设置目标价格，当 TSLA 触及时第一时间通知你</Text>
-            <View className='upgrade-button' onClick={handleUpgrade}>
-              <Text className='upgrade-button-text'>升级开启预警</Text>
-            </View>
-          </View>
-
-          <View className='upgrade-cta' onClick={handleUpgrade}>
+          <View className='upgrade-cta' role='button' tabIndex={0} onClick={handleUpgrade}>
             <Text className='upgrade-cta-text'>低至 ¥4.08/月 解锁全部功能</Text>
-            <Text className='upgrade-cta-sub'>按年付费省17% · 每天只要1毛6</Text>
+            <Text className='upgrade-cta-sub'>按年付费省17% · 每天只要1毛3</Text>
           </View>
         </View>
       ) : (
@@ -364,8 +300,7 @@ export default function Dashboard() {
                 </Text>
               </View>
               <View className='history-bar-chart'>
-                {HISTORICAL_PS_DATA.map((item, idx) => {
-                  const maxPS = Math.max(...HISTORICAL_PS_DATA.map(d => d.psRatio))
+                {(() => { const maxPS = Math.max(...HISTORICAL_PS_DATA.map(d => d.psRatio)); return HISTORICAL_PS_DATA.map((item, idx) => {
                   const barWidth = Math.round((item.psRatio / maxPS) * 100)
                   const prevPS = idx > 0 ? HISTORICAL_PS_DATA[idx - 1].psRatio : item.psRatio
                   const trend = item.psRatio > prevPS ? '\u2191' : item.psRatio < prevPS ? '\u2193' : '\u2192'
@@ -386,7 +321,7 @@ export default function Dashboard() {
                       <Text className='history-bar-trend' style={{ color: trendColor }}>{trend}</Text>
                     </View>
                   )
-                })}
+                })})()}
               </View>
               {/* 当前值对比 */}
               <View className='history-current'>
@@ -426,7 +361,7 @@ export default function Dashboard() {
 
           <View className='pro-section'>
             <Text className='pro-section-title'>🤖 AI 分析助手</Text>
-            <View className='ai-placeholder' onClick={handleOpenAI}>
+            <View className='ai-placeholder' role='button' tabIndex={0} onClick={handleOpenAI}>
               <Text className='ai-placeholder-text'>
                 基于当前 P/S 比率 {tslaData.psRatio.toFixed(2)}x，TSLA 处于{valuation.textCn}区间。
                 点击进入 AI 助手获取深度分析 →
@@ -434,27 +369,6 @@ export default function Dashboard() {
             </View>
           </View>
 
-          <View className='pro-section'>
-            <Text className='pro-section-title'>🔔 价格预警</Text>
-            <View className='alert-placeholder'>
-              <Text className='alert-placeholder-text'>暂无设置预警，点击添加</Text>
-            </View>
-          </View>
-
-          <View className='stats-grid'>
-            <View className='stat-item'>
-              <Text className='stat-label'>成交量</Text>
-              <Text className='stat-value'>
-                {(tslaData.volume / 1000000).toFixed(1)}M
-              </Text>
-            </View>
-            <View className='stat-item'>
-              <Text className='stat-label'>52周区间</Text>
-              <Text className='stat-value'>
-                ${tslaData.fiftyTwoWeekLow.toFixed(0)}-${tslaData.fiftyTwoWeekHigh.toFixed(0)}
-              </Text>
-            </View>
-          </View>
         </View>
       )}
 
@@ -478,11 +392,14 @@ export default function Dashboard() {
       {/* Disclaimer */}
       <View className='disclaimer'>
         <Text className='disclaimer-text'>
-          ⚠️ 本工具仅供学习参考，不构成投资建议。投资有风险，决策需谨慎。
+          ⚠️ 本工具仅供参考，不构成投资建议。投资有风险，入市需谨慎。
+        </Text>
+        <Text className='disclaimer-text' style={{ marginTop: '8px', fontSize: '20px' }}>
+          本页面展示的估值状态基于历史市销率数据的统计分析，不代表对未来股价走势的预测，亦不构成买入、卖出或持有的建议。请结合自身情况独立判断。
         </Text>
       </View>
 
       <CustomTabBar />
-    </View>
+    </ScrollView>
   )
 }

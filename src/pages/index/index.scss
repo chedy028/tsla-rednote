@@ -1,6 +1,6 @@
 .index {
   min-height: 100vh;
-  background: linear-gradient(180deg, #00d4aa 0%, #00a88a 100%);
+  background: linear-gradient(180deg, #009d80 0%, #008a70 100%);
   padding: 64px 32px 120px;
   color: white;
   box-sizing: border-box;
@@ -78,8 +78,8 @@
   }
 
   .features {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    display: flex;
+    flex-direction: column;
     gap: 24px;
     margin-bottom: 80px;
 
@@ -87,13 +87,18 @@
       background: rgba(255, 255, 255, 0.15);
       backdrop-filter: blur(10px);
       border-radius: 16px;
-      padding: 32px 16px;
-      text-align: center;
+      padding: 32px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
 
       .feature-icon {
         font-size: 56px;
-        display: block;
-        margin-bottom: 16px;
+        flex-shrink: 0;
+      }
+
+      .feature-content {
+        flex: 1;
       }
 
       .feature-title {
@@ -124,7 +129,7 @@
 
     .start-button {
       background: white;
-      color: #00d4aa;
+      color: #007a62;
       font-size: 36px;
       font-weight: bold;
       border-radius: 16px;

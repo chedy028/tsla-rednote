@@ -1,5 +1,5 @@
 .dashboard {
-  min-height: 100vh;
+  height: 100vh;
   background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
   padding: 32px;
   padding-bottom: 120px;
@@ -236,78 +236,6 @@
         font-size: 36px;
         font-weight: bold;
         color: #1a1a1a;
-      }
-    }
-  }
-
-  // Buy/Sell Signal Card
-  .signal-card {
-    background: white;
-    border-radius: 24px;
-    padding: 36px;
-    margin-bottom: 32px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-
-    .signal-header {
-      margin-bottom: 24px;
-
-      .signal-title {
-        font-size: 36px;
-        font-weight: bold;
-        color: #1a1a1a;
-      }
-    }
-
-    .signal-badge {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 24px;
-      border-radius: 16px;
-      border: 2px solid;
-      margin-bottom: 24px;
-
-      .signal-emoji {
-        font-size: 48px;
-      }
-
-      .signal-label {
-        font-size: 40px;
-        font-weight: bold;
-      }
-    }
-
-    .signal-reasons {
-      .signal-reason-item {
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        margin-bottom: 16px;
-
-        .signal-reason-bullet {
-          font-size: 28px;
-          color: #666;
-          flex-shrink: 0;
-          margin-top: 2px;
-        }
-
-        .signal-reason-text {
-          font-size: 26px;
-          color: #444;
-          line-height: 1.6;
-        }
-      }
-    }
-
-    .signal-disclaimer {
-      margin-top: 20px;
-      padding-top: 16px;
-      border-top: 1px solid #eee;
-
-      .signal-disclaimer-text {
-        font-size: 22px;
-        color: #999;
       }
     }
   }
@@ -632,4 +560,11 @@
 @keyframes skeleton-pulse {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+// Focus styles for accessibility
+[role='button']:focus-visible {
+  outline: 3px solid #009d80;
+  outline-offset: 2px;
+  border-radius: 8px;
 }
