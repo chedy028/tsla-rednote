@@ -51,15 +51,25 @@ const config = {
       mode: 'hash'
     },
     webpackChain(chain) {
-      // Disable code splitting to fix H5 routing issue
-      // All pages will be in the main bundle
+      // Ensure react/jsx-runtime is in a shared vendors chunk
+      // so all page chunks can access it
       chain.optimization.splitChunks({
+        chunks: 'all',
         cacheGroups: {
-          default: false,
-          defaultVendors: false
-        }
+          reactVendor: {
+            test: /[\\/]node_modules[\\/](react|react-dom|react-reconciler)[\\/]/,
+            name: 'vendors-react',
+            chunks: 'all',
+            priority: 20,
+          },
+          default: {
+            minChunks: 2,
+            priority: -20,
+            reuseExistingChunk: true,
+          },
+        },
       })
-      chain.optimization.set('runtimeChunk', false)
+      chain.optimization.set('runtimeChunk', 'single')
     },
     postcss: {
       autoprefixer: {
