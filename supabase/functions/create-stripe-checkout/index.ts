@@ -1,12 +1,14 @@
 /**
  * Supabase Edge Function: create-stripe-checkout
  * Creates a Stripe Checkout session for subscription payments.
+ * Auth: Supabase Auth JWT (H5 magic link) or WeChat JWT.
  *
  * Environment variables required:
  *   STRIPE_SECRET_KEY  – Stripe secret key (sk_live_...)
  *   STRIPE_SUCCESS_URL – URL to redirect after successful payment
  *   STRIPE_CANCEL_URL  – URL to redirect if user cancels
  */
+import { verifyAuth, errorResponse } from "../_shared/auth.ts";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -56,6 +58,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   try {
+    // ── Auth ────────────────────────────────────────────────────────────
+    const auth = await verifyAuth(req);
+    if ("error" in auth) {
+      return errorResponse(auth.error, auth.status);
+    }
+
     const body: CheckoutRequest = await req.json();
     const { plan, billingPeriod } = body;
 

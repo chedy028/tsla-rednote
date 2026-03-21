@@ -1,9 +1,10 @@
 /**
  * Supabase Edge Function: ai-analyze-h5
  * AI-powered TSLA valuation analysis for H5/web users.
- * Auth: email-based subscription check (no WeChat JWT required).
+ * Auth: Supabase Auth JWT (H5 magic link) or WeChat JWT.
  * Supports both OpenAI and Anthropic APIs.
  */
+import { verifyAuth, errorResponse } from "../_shared/auth.ts";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -211,6 +212,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   try {
+    // ── Auth ────────────────────────────────────────────────────────────
+    const auth = await verifyAuth(req);
+    if ("error" in auth) {
+      return errorResponse(auth.error, auth.status);
+    }
+
     const body: AnalyzeRequest = await req.json();
     const { email, question, stockData, lang = "en" } = body;
 
