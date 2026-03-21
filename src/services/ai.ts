@@ -411,7 +411,7 @@ export function getQuickAnswer(question: string, stockData: TSLAStockData): stri
   const q = question.toLowerCase()
 
   if (q.includes('buy') || q.includes('买') || q.includes('适合买入')) {
-    return generateBuyAdvice(psRatio, valuationTier, price, percentile)
+    return generateValuationAssessment(psRatio, valuationTier, price, percentile)
   }
   if (q.includes('p/s') || q.includes('ratio') || q.includes('市销率')) {
     return generatePSExplanation(psRatio, valuationTier, historicalAvg)
@@ -429,18 +429,18 @@ export function getQuickAnswer(question: string, stockData: TSLAStockData): stri
   return getQuickAnalysis(psRatio, valuationTier).content
 }
 
-function generateBuyAdvice(psRatio: number, tier: ValuationTier, price: number, percentile: number): string {
+function generateValuationAssessment(psRatio: number, tier: ValuationTier, price: number, percentile: number): string {
   const psText = psRatio.toFixed(2)
-  const signal = tier.tier === 'BARGAIN' || tier.tier === 'CHEAP' ? 'favorable' :
-                 tier.tier === 'FAIR' ? 'neutral' : 'unfavorable'
+  const assessment = tier.tier === 'BARGAIN' || tier.tier === 'CHEAP' ? 'below historical norms' :
+                     tier.tier === 'FAIR' ? 'within historical range' : 'above historical norms'
 
   return (
-    `Buy signal: ${signal.toUpperCase()}\n\n` +
+    `Valuation assessment: ${assessment}\n\n` +
     `Price: $${price.toFixed(2)} | P/S: ${psText}x | Percentile: ${percentile}%\n\n` +
-    `${signal === 'favorable' ? 'Current valuation suggests a reasonable entry point. Consider gradual position building.' :
-      signal === 'neutral' ? 'Valuation is fair. Wait for pullbacks or maintain existing positions.' :
-      'Valuation is elevated. Not recommended for new entries at this level.'}\n\n` +
-    `⚠️ Not investment advice. Do your own research.`
+    `${assessment === 'below historical norms' ? 'Current P/S ratio is lower than most historical periods, suggesting the market is pricing in less growth optimism.' :
+      assessment === 'within historical range' ? 'Current P/S ratio is consistent with historical averages, reflecting balanced market expectations.' :
+      'Current P/S ratio exceeds most historical periods, indicating elevated market expectations for growth.'}\n\n` +
+    `⚠️ 以上分析仅供参考，不构成任何投资建议。请结合自身情况独立判断。`
   )
 }
 

@@ -1,5 +1,5 @@
 .dashboard {
-  min-height: 100vh;
+  height: 100vh;
   background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
   padding: 32px;
   padding-bottom: 120px;
@@ -240,7 +240,7 @@
     }
   }
 
-  // Buy/Sell Signal Card
+  // Valuation Status Card
   .signal-card {
     background: white;
     border-radius: 24px;
