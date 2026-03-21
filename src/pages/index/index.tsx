@@ -282,29 +282,27 @@ function DashboardInline() {
       {/* ==================== PRO FEATURES ==================== */}
       {isPro && (
         <View>
-          {/* Email prompt for AI features */}
-          {!proEmail && !showEmailInput && (
-            <View role='button' tabIndex={0} onClick={() => setShowEmailInput(true)} style={{ background: '#fff3e0', borderRadius: '12px', padding: '16px', marginBottom: '16px', textAlign: 'center', cursor: 'pointer' }}>
-              <Text style={{ fontSize: '22px', color: '#e65100' }}>{t('pro.email.title')}</Text>
-            </View>
-          )}
-          {!proEmail && showEmailInput && (
-            <View style={{ background: 'white', borderRadius: '12px', padding: '16px', marginBottom: '16px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <input
-                type='email'
-                placeholder='email@example.com'
-                value={emailInput}
-                onChange={(e) => setEmailInput((e.target as HTMLInputElement).value)}
-                style={{ flex: 1, padding: '10px 14px', borderRadius: '8px', border: '2px solid #e0e0e0', fontSize: '16px', outline: 'none' }}
-              />
-              <View role='button' tabIndex={0} onClick={() => {
-                if (emailInput) {
-                  setProEmail(emailInput)
-                  setProEmailState(emailInput)
-                  setShowEmailInput(false)
-                }
-              }} style={{ background: '#6c5ce7', borderRadius: '8px', padding: '10px 20px', cursor: 'pointer' }}>
-                <Text style={{ fontSize: '20px', fontWeight: 'bold', color: 'white' }}>{t('pro.email.save')}</Text>
+          {/* Onboarding: email prompt for daily digest delivery */}
+          {!proEmail && (
+            <View style={{ background: 'linear-gradient(135deg, #009d8020, #008a7010)', border: '2px solid #009d8040', borderRadius: '16px', padding: '24px', marginBottom: '16px' }}>
+              <Text style={{ fontSize: '26px', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>{t('pro.email.digest.title')}</Text>
+              <Text style={{ fontSize: '20px', color: '#666', display: 'block', marginBottom: '16px' }}>{t('pro.email.digest.desc')}</Text>
+              <View style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input
+                  type='email'
+                  placeholder='email@example.com'
+                  value={emailInput}
+                  onChange={(e) => setEmailInput((e.target as HTMLInputElement).value)}
+                  style={{ flex: 1, padding: '12px 16px', borderRadius: '10px', border: '2px solid #e0e0e0', fontSize: '16px', outline: 'none' }}
+                />
+                <View role='button' tabIndex={0} onClick={() => {
+                  if (emailInput) {
+                    setProEmail(emailInput)
+                    setProEmailState(emailInput)
+                  }
+                }} style={{ background: '#009d80', borderRadius: '10px', padding: '12px 24px', cursor: 'pointer', flexShrink: 0 }}>
+                  <Text style={{ fontSize: '20px', fontWeight: 'bold', color: 'white' }}>{t('pro.email.save')}</Text>
+                </View>
               </View>
             </View>
           )}
@@ -567,11 +565,10 @@ function PricingInline() {
     return onLangChange(() => setLangTick(n => n + 1))
   }, [])
 
-  const handleSubscribe = useCallback(async (plan: 'basic' | 'pro', billing: 'monthly' | 'annual') => {
-    const key = `${plan}-${billing}`
-    setLoadingPlan(key)
+  const handleSubscribe = useCallback(async (billing: 'monthly' | 'annual') => {
+    setLoadingPlan(billing)
     try {
-      await openStripeCheckout(plan, billing)
+      await openStripeCheckout('basic', billing)
     } catch (err) {
       console.error('Checkout error:', err)
       setLoadingPlan(null)
@@ -583,68 +580,39 @@ function PricingInline() {
       {/* Language Switcher */}
       <LangSwitcher />
 
-      <Text style={{ fontSize: '40px', fontWeight: 'bold', display: 'block', textAlign: 'center', marginBottom: '32px' }}>{t('pricing.title')}</Text>
+      <Text style={{ fontSize: '40px', fontWeight: 'bold', display: 'block', textAlign: 'center', marginBottom: '8px' }}>{t('pricing.title')}</Text>
+      <Text style={{ fontSize: '22px', color: '#666', display: 'block', textAlign: 'center', marginBottom: '32px' }}>{t('dash.upgrade.sub')}</Text>
 
-      {/* Basic Plan */}
-      <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '16px', border: '2px solid #00d4aa' }}>
-        <Text style={{ fontSize: '28px', fontWeight: 'bold', display: 'block' }}>{t('pricing.basic')}</Text>
-        <Text style={{ fontSize: '48px', fontWeight: 'bold', color: '#008a70', display: 'block', marginTop: '16px' }}>{t('pricing.basic.price')}</Text>
-        <Text style={{ fontSize: '22px', color: '#666', display: 'block' }}>{t('pricing.basic.annual')}</Text>
-        <View style={{ marginTop: '16px' }}>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.basic.f1')}</Text>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.basic.f2')}</Text>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.basic.f3')}</Text>
+      {/* Single Plan */}
+      <View style={{ background: 'white', borderRadius: '20px', padding: '32px', marginBottom: '24px', border: '3px solid #009d80', boxShadow: '0 4px 20px rgba(0,157,128,0.15)' }}>
+        <Text style={{ fontSize: '36px', fontWeight: 'bold', display: 'block', textAlign: 'center' }}>{t('pricing.basic.price')}</Text>
+        <Text style={{ fontSize: '22px', color: '#666', display: 'block', textAlign: 'center', marginTop: '4px' }}>{t('pricing.basic.annual')}</Text>
+
+        <View style={{ marginTop: '24px' }}>
+          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '12px' }}>{t('pricing.basic.f1')}</Text>
+          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '12px' }}>{t('pricing.basic.f2')}</Text>
+          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '12px' }}>{t('pricing.basic.f3')}</Text>
+          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '12px' }}>{t('pricing.pro.f2')}</Text>
+          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '12px' }}>{t('pricing.pro.f3')}</Text>
+          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '12px' }}>{t('pricing.pro.f4')}</Text>
         </View>
-        {/* Subscribe buttons */}
+
         <View
           role='button' tabIndex={0}
-          onClick={() => handleSubscribe('basic', 'monthly')}
-          style={{ background: '#009d80', borderRadius: '12px', padding: '14px', textAlign: 'center', marginTop: '16px', cursor: 'pointer' }}
+          onClick={() => handleSubscribe('monthly')}
+          style={{ background: 'linear-gradient(135deg, #009d80, #008a70)', borderRadius: '14px', padding: '18px', textAlign: 'center', marginTop: '16px', cursor: 'pointer' }}
         >
-          <Text style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>
-            {loadingPlan === 'basic-monthly' ? t('pricing.subscribe.loading') : t('pricing.subscribe')}
+          <Text style={{ fontSize: '26px', fontWeight: 'bold', color: 'white' }}>
+            {loadingPlan === 'monthly' ? t('pricing.subscribe.loading') : t('pricing.subscribe')}
           </Text>
         </View>
         <View
           role='button' tabIndex={0}
-          onClick={() => handleSubscribe('basic', 'annual')}
-          style={{ border: '2px solid #00d4aa', borderRadius: '12px', padding: '12px', textAlign: 'center', marginTop: '8px', cursor: 'pointer' }}
+          onClick={() => handleSubscribe('annual')}
+          style={{ border: '2px solid #009d80', borderRadius: '14px', padding: '14px', textAlign: 'center', marginTop: '10px', cursor: 'pointer' }}
         >
           <Text style={{ fontSize: '22px', color: '#008a70' }}>
-            {loadingPlan === 'basic-annual' ? t('pricing.subscribe.loading') : t('pricing.or.annual')}
-          </Text>
-        </View>
-      </View>
-
-      {/* Pro Plan */}
-      <View style={{ background: 'white', borderRadius: '16px', padding: '24px', marginBottom: '24px' }}>
-        <Text style={{ fontSize: '28px', fontWeight: 'bold', display: 'block' }}>{t('pricing.pro')}</Text>
-        <Text style={{ fontSize: '48px', fontWeight: 'bold', color: '#6c5ce7', display: 'block', marginTop: '16px' }}>{t('pricing.pro.price')}</Text>
-        <Text style={{ fontSize: '22px', color: '#666', display: 'block' }}>{t('pricing.pro.annual')}</Text>
-        <View style={{ marginTop: '16px' }}>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.pro.f1')}</Text>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.pro.f2')}</Text>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.pro.f3')}</Text>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.pro.f4')}</Text>
-          <Text style={{ fontSize: '22px', display: 'block', marginBottom: '8px' }}>{t('pricing.pro.f5')}</Text>
-        </View>
-        {/* Subscribe buttons */}
-        <View
-          role='button' tabIndex={0}
-          onClick={() => handleSubscribe('pro', 'monthly')}
-          style={{ background: '#6c5ce7', borderRadius: '12px', padding: '14px', textAlign: 'center', marginTop: '16px', cursor: 'pointer' }}
-        >
-          <Text style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>
-            {loadingPlan === 'pro-monthly' ? t('pricing.subscribe.loading') : t('pricing.subscribe')}
-          </Text>
-        </View>
-        <View
-          role='button' tabIndex={0}
-          onClick={() => handleSubscribe('pro', 'annual')}
-          style={{ border: '2px solid #6c5ce7', borderRadius: '12px', padding: '12px', textAlign: 'center', marginTop: '8px', cursor: 'pointer' }}
-        >
-          <Text style={{ fontSize: '22px', color: '#6c5ce7' }}>
-            {loadingPlan === 'pro-annual' ? t('pricing.subscribe.loading') : t('pricing.or.annual')}
+            {loadingPlan === 'annual' ? t('pricing.subscribe.loading') : t('pricing.or.annual')}
           </Text>
         </View>
       </View>

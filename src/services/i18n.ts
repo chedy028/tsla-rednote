@@ -98,6 +98,8 @@ const translations: Record<Lang, Record<string, string>> = {
     'pro.alerts.type': '预警类型',
     'pro.alerts.value': '目标值',
     'pro.email.title': '输入 Pro 邮箱使用 AI 功能',
+    'pro.email.digest.title': '📬 设置每日估值报告',
+    'pro.email.digest.desc': '输入邮箱，每日晨间收到 TSLA 估值信号和 AI 分析',
     'pro.email.save': '保存',
 
     // Pricing
@@ -213,6 +215,8 @@ const translations: Record<Lang, Record<string, string>> = {
     'pro.alerts.type': 'Alert type',
     'pro.alerts.value': 'Target value',
     'pro.email.title': 'Enter Pro email to use AI features',
+    'pro.email.digest.title': '📬 Set up daily valuation report',
+    'pro.email.digest.desc': 'Enter your email to receive daily TSLA valuation signals and AI analysis',
     'pro.email.save': 'Save',
 
     // Pricing
@@ -328,6 +332,8 @@ const translations: Record<Lang, Record<string, string>> = {
     'pro.alerts.type': 'Tipo de alerta',
     'pro.alerts.value': 'Valor objetivo',
     'pro.email.title': 'Ingresa email Pro para funciones IA',
+    'pro.email.digest.title': '📬 Configura el informe diario',
+    'pro.email.digest.desc': 'Ingresa tu email para recibir señales de valoración TSLA y análisis IA',
     'pro.email.save': 'Guardar',
 
     // Pricing
@@ -443,6 +449,8 @@ const translations: Record<Lang, Record<string, string>> = {
     'pro.alerts.type': 'アラートタイプ',
     'pro.alerts.value': '目標値',
     'pro.email.title': 'AI機能を使うにはProメールを入力',
+    'pro.email.digest.title': '📬 デイリーレポートを設定',
+    'pro.email.digest.desc': 'メールアドレスを入力して、毎日のTSLAバリュエーションシグナルとAI分析を受け取りましょう',
     'pro.email.save': '保存',
 
     // Pricing
@@ -558,6 +566,8 @@ const translations: Record<Lang, Record<string, string>> = {
     'pro.alerts.type': '알림 유형',
     'pro.alerts.value': '목표값',
     'pro.email.title': 'AI 기능 사용을 위해 Pro 이메일 입력',
+    'pro.email.digest.title': '📬 데일리 리포트 설정',
+    'pro.email.digest.desc': '이메일을 입력하여 매일 TSLA 밸류에이션 시그널과 AI 분석을 받아보세요',
     'pro.email.save': '저장',
 
     // Pricing
